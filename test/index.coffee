@@ -105,7 +105,7 @@ describe 'annotateTree', ->
 			.on 'end', -> resolve(mtimes)
 			.on 'error', reject
 		.then (layer_mtimes) ->
-			tk.freeze(new Date(2016, 0, 1))
+			tk.freeze(Date.UTC(2016, 0, 1))
 			annTree = annotateTree(layer_mtimes, tree)
 			tk.reset()
 
