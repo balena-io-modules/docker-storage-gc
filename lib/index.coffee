@@ -34,11 +34,11 @@ exports.parseEventStream = parseEventStream = ->
 
 saneRepoTags = (repoTags) -> if '<none>:<none>' in repoTags then [] else repoTags
 
+exports.createNode = createNode = (id) -> { id: id, size: 0, repoTags: [], mtime: null, children: {} }
+
 exports.createTree = createTree = (images) ->
 	tree = {}
 	root = '0000000000000000000000000000000000000000000000000000000000000000'
-
-	createNode = (id) -> { id: id, size: 0, repoTags: [], mtime: null, children: {} }
 
 	for image in images
 		node = tree[image.Id] ?= createNode(image.Id)
@@ -87,7 +87,18 @@ exports.merge = merge = (arrs, comp) ->
 	return ret
 
 exports.lruSort = lruSort = (tree) ->
-	merge([lruSort(child) for own child of tree.children])
+	tree = _.clone(tree)
+	children = tree.children
+	delete tree.children
+
+	ret = merge((lruSort(child) for own id, child of children), (a, b) -> a.mtime - b.mtime)
+
+	if tree.repoTags.length is 0 and ret.length isnt 0
+		ret[ret.length - 1].size += tree.size
+	else
+		ret.push(tree)
+
+	return ret
 		
 # docker.listImagesAsync(all: true)
 # .then (images) ->
