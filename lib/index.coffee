@@ -60,26 +60,20 @@ exports.annotateTree = annotateTree = (layer_mtimes, tree) ->
 		children: _.mapValues(tree.children, annotateTree.bind(null, layer_mtimes))
 	}
 
-compare = (a, b) ->
-	if a.mtime isnt b.mtime
-		return a.mtime - b.mtime
-	else
-		return a.size - b.size
-
 # arr is array of arrays to be merged
 # modifies arrs, TODO: offsets
 exports.merge = merge = (arrs, comp = 0) ->
 	totalLength = _.sum(arrs, 'length')
 	return _.times totalLength, (i) ->
-		minArr = _.min(arrs, comp)
-		return minArr.shift()
+		arrs = _.sortByAll(arrs, comp)
+		return arrs[0].shift()
 
 exports.lruSort = lruSort = (tree) ->
 	tree = _.clone(tree)
 	children = tree.children
 	delete tree.children
 
-	ret = merge((lruSort(child) for own id, child of children), '0.mtime')
+	ret = merge(_.map(children, lruSort), ['0.mtime', '0.size'])
 
 	if tree.repoTags.length is 0 and ret.length isnt 0
 		_.last(ret).size += tree.size
