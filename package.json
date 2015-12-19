@@ -12,7 +12,8 @@
     "JSONStream": "^1.0.7",
     "bluebird": "^3.0.5",
     "dockerode": "^2.2.3",
-    "event-stream": "^3.3.2"
+    "event-stream": "^3.3.2",
+    "lodash": "^3.10.1"
   },
   "devDependencies": {
     "chai": "^3.4.1",
