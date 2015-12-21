@@ -7,30 +7,107 @@ es = require 'event-stream'
 
 { parseEventStream } = require '../lib/docker-event-stream'
 { createNode, createTree, annotateTree } = require '../lib/docker-image-tree'
-{ merge, lruSort } = require '../lib/lru'
+{ createCompare, merge, lruSort } = require '../lib/lru'
+
+describe 'createCompare', ->
+	it 'should return a function', ->
+		expect(createCompare(1, 0)).to.be.a('function')
+
+	it 'should compare based on mtime', ->
+		comp = createCompare(1, 0)
+		a = createNode('a')
+		a.mtime = 5
+
+		b = createNode('b')
+		b.mtime = 3
+
+		expect(comp(a, b)).to.equal(a.mtime - b.mtime)
+
+	it 'should compare based on size', ->
+		comp = createCompare(0, 0)
+		a = createNode('a')
+		a.mtime = 5
+		a.size = 10
+
+		b = createNode('b')
+		b.mtime = 3
+		b.size = 7
+
+		expect(comp(a, b)).to.equal(-3)
+
+	it 'should compare based on mtime if `a.mtime` above threshold', ->
+		comp = createCompare(0, 30000)
+
+		a = createNode('a')
+		a.mtime = Date.UTC(2016, 0, 1)
+		a.size = 10
+
+		b = createNode('b')
+		b.mtime = 3
+		b.size = 7
+
+		tk.freeze(Date.UTC(2016, 0, 1, 0, 0, 15))
+		expect(comp(a, b)).to.equal(a.mtime - b.mtime)
+		tk.reset()
+
+	it 'should compare based on mtime if `b.mtime` above threshold', ->
+		comp = createCompare(0, 30000)
+
+		a = createNode('a')
+		a.mtime = 3
+		a.size = 10
+
+		b = createNode('b')
+		b.mtime = Date.UTC(2016, 0, 1)
+		b.size = 7
+
+		tk.freeze(Date.UTC(2016, 0, 1, 0, 0, 15))
+		expect(comp(a, b)).to.equal(a.mtime - b.mtime)
+		tk.reset()
+
+	it 'should compare based on the weight function', ->
+		comp = createCompare(0.5, 0)
+
+		a = createNode('a')
+		a.mtime = 10
+		a.size = 10
+
+		b = createNode('b')
+		b.mtime = 5
+		b.size = 7
+
+		tk.freeze(Date.UTC(2016, 0, 1, 0, 0, 15))
+		expect(comp(a, b)).to.equal(1)
+		tk.reset()
 
 describe 'merge', ->
+	before ->
+		@compare = (a, b) -> a - b
+
 	it 'should merge []', ->
-		expect(merge([])).to.deep.equal([])
+		expect(merge([], @compare)).to.deep.equal([])
 	it 'should merge [[],[],...]', ->
-		expect(merge([ [], [] ])).to.deep.equal([])
+		expect(merge([ [], [] ], @compare)).to.deep.equal([])
 	it 'should merge [[a],[],[],...]', ->
-		expect(merge([ [0],[],[] ])).to.deep.equal([0])
+		expect(merge([ [0],[],[] ], @compare)).to.deep.equal([0])
 	it 'should merge arrays of sorted numbers', ->
-		expect(merge([ [1,3,5],[2,4,6] ])).to.deep.equal([1,2,3,4,5,6])
+		expect(merge([ [1,3,5],[2,4,6] ], @compare)).to.deep.equal([1,2,3,4,5,6])
 	it 'should merge unsorted numbers in the order they were given', ->
-		expect(merge([ [5,3,1],[4,6,2] ])).to.deep.equal([4,5,3,1,6,2])
+		expect(merge([ [5,3,1],[4,6,2] ], @compare)).to.deep.equal([4,5,3,1,6,2])
 
 describe 'lruSort', ->
+	before ->
+		@compare = createCompare(1, 0)
+
 	it 'should sort a single node', ->
 		a = createNode('a')
 
 		ret_a = _.clone(a)
 		delete ret_a.children
 
-		expect(lruSort(a)).to.deep.equal([ret_a])
+		expect(lruSort(a, @compare)).to.deep.equal([ret_a])
+
 	it 'should sort a root node with two children', ->
-		return
 		a = createNode('a')
 		a.size = 2
 		a.mtime = 2
@@ -53,8 +130,7 @@ describe 'lruSort', ->
 		ret_c.size += a.size
 		delete ret_c.children
 
-		ret = lruSort(a)
-		console.log(ret)
+		ret = lruSort(a, @compare)
 		expect(ret).to.deep.equal([ret_b, ret_c])
 
 	it 'should sort a real tree with multiple tags', ->
@@ -71,12 +147,12 @@ describe 'lruSort', ->
 				mtimes = data
 			.on 'end', -> resolve(mtimes)
 			.on 'error', reject
-		.then (layer_mtimes) ->
+		.then (layer_mtimes) =>
 			tk.freeze(Date.UTC(2016, 0, 1))
 			annTree = annotateTree(layer_mtimes, tree)
 			tk.reset()
 
-			ret = lruSort(annTree)
+			ret = lruSort(annTree, @compare)
 			output = [
 				{
 					"id": "9a61b6b1315e6b457c31a03346ab94486a2f5397f4a82219bee01eead1c34c2e",
@@ -111,5 +187,3 @@ describe 'lruSort', ->
 			]
 
 			expect(ret).to.deep.equal(output)
-
-

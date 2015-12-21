@@ -3,7 +3,7 @@ es = require 'event-stream'
 
 { dockerMtimeStream } = require './docker-event-stream'
 { dockerImageTree, annotateTree } = require './docker-image-stream'
-{ lruSort } = require './lru'
+{ createCompare, lruSort } = require './lru'
 
 current_mtimes = {}
 
@@ -16,7 +16,8 @@ dockerMtimeStream()
 garbageCollect = (reclaimSpace) ->
 	dokcerImageTree()
 	.then(annotateTree.bine(null, current_mtimes))
-	.then(lruSort)
+	.then (tree) ->
+		lruSort(tree, createCompare(1, 0))
 	.then (candidates) ->
 		# Remove candidates until we reach `reclaimSpace` bytes
 		console.log('foobar')
