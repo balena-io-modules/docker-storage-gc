@@ -15,7 +15,7 @@ exports.createTree = createTree = (images) ->
 		parentId = image.ParentId or root
 		parent = tree[parentId] ?= createNode(parentId)
 
-		node.repoTags = saneRepoTags(image.RepoTags)
+		node.repoTags = if image.RepoTags? then saneRepoTags(image.RepoTags) else '<No tag>'
 		node.size = image.Size
 		parent.children[image.Id] = node
 
