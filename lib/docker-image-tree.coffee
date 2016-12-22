@@ -32,6 +32,11 @@ exports.annotateTree = annotateTree = (layer_mtimes, tree) ->
 
 docker = new Docker(socketPath: '/var/run/docker.sock')
 docker = Promise.promisifyAll(docker)
+# Hack dockerode to promisify internal classes' prototypes
+Promise.promisifyAll(Docker({}).getImage().constructor.prototype)
+
+exports.getDocker = ->
+	docker
 
 exports.dockerImageTree = dockerImageTree = ->
 	docker.listImagesAsync(all: true).then(createTree)
