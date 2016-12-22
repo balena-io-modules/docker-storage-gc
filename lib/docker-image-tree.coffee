@@ -15,7 +15,7 @@ exports.createTree = createTree = (images) ->
 		parentId = image.ParentId or root
 		parent = tree[parentId] ?= createNode(parentId)
 
-		node.repoTags = saneRepoTags(image.RepoTags)
+		node.repoTags = if image.RepoTags? then saneRepoTags(image.RepoTags) else '<No tag>'
 		node.size = image.Size
 		parent.children[image.Id] = node
 
@@ -32,6 +32,11 @@ exports.annotateTree = annotateTree = (layer_mtimes, tree) ->
 
 docker = new Docker(socketPath: '/var/run/docker.sock')
 docker = Promise.promisifyAll(docker)
+# Hack dockerode to promisify internal classes' prototypes
+Promise.promisifyAll(Docker({}).getImage().constructor.prototype)
+
+exports.getDocker = ->
+	docker
 
 exports.dockerImageTree = dockerImageTree = ->
 	docker.listImagesAsync(all: true).then(createTree)
