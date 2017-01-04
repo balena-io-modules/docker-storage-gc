@@ -27,15 +27,15 @@ garbageCollect = (reclaimSpace) ->
 		# TODO: Find a lodash function for this!
 		size = 0
 		remove = []
-		for i in candidates
+		for image in candidates
 			if size >= reclaimSpace
 				break
-			size += i.size
-			remove.push(i)
+			size += image.size
+			remove.push(image)
 
-		Promise.all remove.map (i) ->
-			console.log("Removing image: #{i.repoTags[0]}")
-			getDocker().getImage(i.id).removeAsync()
+		Promise.all remove.map (image) ->
+			console.log("Removing image: #{image.repoTags[0]}")
+			getDocker().getImage(image.id).removeAsync()
 		.then (data) ->
 			console.log('Done.')
 
