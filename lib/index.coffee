@@ -13,7 +13,6 @@ dockerMtimeStream()
 	stream
 	.on 'data', (layer_mtimes) ->
 		current_mtimes = layer_mtimes
-		garbageCollect(50)
 
 garbageCollect = (reclaimSpace) ->
 	dockerImageTree()
