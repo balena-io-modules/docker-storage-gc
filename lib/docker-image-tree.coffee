@@ -2,7 +2,11 @@ _ = require 'lodash'
 Docker = require 'dockerode'
 Promise = require 'bluebird'
 
-saneRepoTags = (repoTags) -> if '<none>:<none>' in repoTags then [] else repoTags
+saneRepoTags = (image) ->
+	if not image.RepoTags? or '<none>:<none>' in image.RepoTags
+		return [image.id]
+	else
+		return image.RepoTags
 
 exports.createNode = createNode = (id) -> { id: id, size: 0, repoTags: [], mtime: null, children: {} }
 
@@ -15,7 +19,7 @@ exports.createTree = createTree = (images) ->
 		parentId = image.ParentId or root
 		parent = tree[parentId] ?= createNode(parentId)
 
-		node.repoTags = if image.RepoTags? then saneRepoTags(image.RepoTags) else '<No tag>'
+		node.repoTags = saneRepoTags(image)
 		node.size = image.Size
 		parent.children[image.Id] = node
 

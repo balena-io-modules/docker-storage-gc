@@ -25,15 +25,15 @@ garbageCollect = (reclaimSpace) ->
 
 		# Decide on the images to remove
 		size = 0
-		remove = _.takeWhile candidates, (image) ->
+		return _.takeWhile candidates, (image) ->
 			return false if size >= reclaimSpace
 			size += image.size
 			return true
-
+	.then (images) ->
 		# Request deletion of each image
-		Promise.map remove, (image) ->
+		Promise.map images, (image) ->
 			console.log("Removing image: #{image.repoTags[0]}")
 			getDocker().getImage(image.id).removeAsync()
-		.then (data) ->
+		.then ->
 			console.log('Done.')
 
