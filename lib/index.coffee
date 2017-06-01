@@ -3,8 +3,9 @@ es = require 'event-stream'
 _ = require 'lodash'
 
 { dockerMtimeStream } = require './docker-event-stream'
-{ getDocker, dockerImageTree, annotateTree } = require './docker-image-tree'
+{ dockerImageTree, annotateTree } = require './docker-image-tree'
 { createCompare, lruSort } = require './lru'
+docker = require './docker'
 
 current_mtimes = {}
 

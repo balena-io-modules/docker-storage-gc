@@ -1,6 +1,5 @@
 _ = require 'lodash'
-Docker = require 'dockerode'
-Promise = require 'bluebird'
+docker = require './docker'
 
 saneRepoTags = (repoTags) -> if '<none>:<none>' in repoTags then [] else repoTags
 
@@ -29,14 +28,6 @@ exports.annotateTree = annotateTree = (layer_mtimes, tree) ->
 		mtime: layer_mtimes[tree.id] or Date.now()
 		children: _.mapValues(tree.children, annotateTree.bind(null, layer_mtimes))
 	}
-
-docker = new Docker(socketPath: '/var/run/docker.sock')
-docker = Promise.promisifyAll(docker)
-# Hack dockerode to promisify internal classes' prototypes
-Promise.promisifyAll(Docker({}).getImage().constructor.prototype)
-
-exports.getDocker = ->
-	docker
 
 exports.dockerImageTree = dockerImageTree = ->
 	docker.listImagesAsync(all: true).then(createTree)
