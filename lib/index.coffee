@@ -1,9 +1,11 @@
 Promise = require 'bluebird'
 es = require 'event-stream'
+_ = require 'lodash'
 
 { dockerMtimeStream } = require './docker-event-stream'
-{ dockerImageTree, annotateTree } = require './docker-image-stream'
+{ dockerImageTree, annotateTree } = require './docker-image-tree'
 { createCompare, lruSort } = require './lru'
+docker = require './docker'
 
 current_mtimes = {}
 
@@ -15,9 +17,24 @@ dockerMtimeStream()
 
 garbageCollect = (reclaimSpace) ->
 	dokcerImageTree()
-	.then(annotateTree.bine(null, current_mtimes))
+	.then(annotateTree.bind(null, current_mtimes))
 	.then (tree) ->
 		lruSort(tree, createCompare(1, 0))
 	.then (candidates) ->
 		# Remove candidates until we reach `reclaimSpace` bytes
-		console.log('foobar')
+		# Candidates is a list of images, with the least recently used
+		# first in the list
+
+		# Decide on the images to remove
+		size = 0
+		return _.takeWhile candidates, (image) ->
+			return false if size >= reclaimSpace
+			size += image.size
+			return true
+	.map (image) ->
+		# Request deletion of each image
+		console.log("Removing image: #{image.repoTags[0]}")
+		getDocker().getImage(image.id).removeAsync()
+	.then ->
+		console.log('Done.')
+
