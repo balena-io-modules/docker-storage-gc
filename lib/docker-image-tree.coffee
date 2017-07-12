@@ -1,7 +1,9 @@
 _ = require 'lodash'
 docker = require './docker'
 
-saneRepoTags = (repoTags) -> if '<none>:<none>' in repoTags then [] else repoTags
+saneRepoTags = (repoTags) ->
+	return [] if !repoTags?
+	return if '<none>:<none>' in repoTags then [] else repoTags
 
 exports.createNode = createNode = (id) -> { id: id, size: 0, repoTags: [], mtime: null, children: {} }
 

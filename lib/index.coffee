@@ -16,7 +16,7 @@ dockerMtimeStream()
 		current_mtimes = layer_mtimes
 
 garbageCollect = (reclaimSpace) ->
-	dokcerImageTree()
+	dockerImageTree()
 	.then(annotateTree.bind(null, current_mtimes))
 	.then (tree) ->
 		lruSort(tree, createCompare(1, 0))
@@ -34,7 +34,7 @@ garbageCollect = (reclaimSpace) ->
 	.map (image) ->
 		# Request deletion of each image
 		console.log("Removing image: #{image.repoTags[0]}")
-		getDocker().getImage(image.id).removeAsync()
+		docker.getImage(image.id).removeAsync()
 	.then ->
 		console.log('Done.')
 
