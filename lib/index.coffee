@@ -34,7 +34,17 @@ exports.garbageCollect = (reclaimSpace) ->
 	.map (image) ->
 		# Request deletion of each image
 		console.log("Removing image: #{image.repoTags[0]}")
-		docker.getImage(image.id).removeAsync()
-	.then ->
+		docker.getImage(image.id).remove()
+		.return(true)
+		.catch (e) ->
+			# TODO: If an image fails to be removed, this means that the total space
+			# removed will actually be less than the requested amount. We need to
+			# take into account if an image fails to be removed, and either select a
+			# new one or retry
+			console.log('Failed to remove image: ', image)
+			console.log(e)
+			return false
+	.then (results) ->
 		console.log('Done.')
+		return _.every(results)
 
