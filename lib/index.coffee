@@ -15,7 +15,7 @@ dockerMtimeStream()
 	.on 'data', (layer_mtimes) ->
 		current_mtimes = layer_mtimes
 
-garbageCollect = (reclaimSpace) ->
+exports.garbageCollect = (reclaimSpace) ->
 	dockerImageTree()
 	.then(annotateTree.bind(null, current_mtimes))
 	.then (tree) ->
