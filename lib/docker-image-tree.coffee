@@ -23,6 +23,7 @@ exports.createTree = createTree = (images) ->
 	return tree[root]
 
 exports.annotateTree = annotateTree = (layer_mtimes, tree) ->
+	return {} if !tree?
 	return {
 		id: tree.id
 		repoTags: tree.repoTags
