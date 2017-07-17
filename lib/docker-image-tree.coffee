@@ -1,5 +1,5 @@
 _ = require 'lodash'
-docker = require './docker'
+dockerUtils = require './docker'
 
 saneRepoTags = (repoTags) ->
 	return [] if !repoTags?
@@ -33,4 +33,6 @@ exports.annotateTree = annotateTree = (layer_mtimes, tree) ->
 	}
 
 exports.dockerImageTree = dockerImageTree = ->
-	docker.listImagesAsync(all: true).then(createTree)
+	dockerUtils.getDocker()
+	.then (docker) ->
+		docker.listImages(all: true).then(createTree)
