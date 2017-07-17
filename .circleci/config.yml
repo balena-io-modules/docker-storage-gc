@@ -1,0 +1,15 @@
+version: 2
+
+machine:
+  services:
+    - docker
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node:6
+    steps:
+      - setup-docker-engine
+      - checkout
+      - run: npm install
+      - run: npm test
