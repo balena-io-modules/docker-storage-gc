@@ -1,7 +1,8 @@
 es = require 'event-stream'
-Docker = require 'dockerode'
 Promise = require 'bluebird'
 JSONStream = require 'JSONStream'
+
+dockerUtils = require './docker'
 
 IMAGE_EVENTS = [ 'delete', 'import', 'pull', 'push', 'tag', 'untag' ]
 
@@ -24,12 +25,9 @@ exports.parseEventStream = parseEventStream = ->
 			return layer_mtimes
 	)
 
-
-docker = new Docker(socketPath: '/var/run/docker.sock')
-docker = Promise.promisifyAll(docker)
-
 exports.dockerMtimeStream = dockerMtimeStream = ->
-	docker.getEventsAsync()
+	dockerUtils.getDocker()
+	.call('getEvents')
 	.then (stream) ->
 		es.pipeline(
 			stream
