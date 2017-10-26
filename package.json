@@ -1,6 +1,6 @@
 {
   "name": "docker-storage-gc",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "lib/index.coffee",
   "scripts": {
     "test": "./node_modules/.bin/mocha --compilers coffee:coffee-script/register test"
