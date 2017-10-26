@@ -25,9 +25,8 @@ exports.parseEventStream = parseEventStream = ->
 			return layer_mtimes
 	)
 
-exports.dockerMtimeStream = dockerMtimeStream = ->
-	dockerUtils.getDocker()
-	.call('getEvents')
+exports.dockerMtimeStream = dockerMtimeStream = (docker) ->
+	docker.getEvents()
 	.then (stream) ->
 		es.pipeline(
 			stream

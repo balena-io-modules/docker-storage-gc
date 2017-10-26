@@ -5,7 +5,10 @@ path = require 'path'
 fs = require 'mz/fs'
 url = require 'url'
 
-getDockerConnectOpts = ->
+getDockerConnectOpts = (hostObj) ->
+
+	return Promise.resolve(hostObj) if !_.isEmpty(hostObj)
+
 	# Detect circleCi build
 	if process.env.CIRCLECI?
 		certs = ['ca.pem', 'cert.pem', 'key.pem'].map((file) -> path.join(process.env.DOCKER_CERT_PATH, file))
@@ -26,7 +29,7 @@ getDockerConnectOpts = ->
 	else
 		return Promise.resolve({ socketPath: '/var/run/docker.sock', Promise })
 
-exports.getDocker = _.once ->
-	getDockerConnectOpts()
+exports.getDocker = (hostObj) ->
+	getDockerConnectOpts(hostObj)
 	.then (opts) ->
 		return new Docker(opts)

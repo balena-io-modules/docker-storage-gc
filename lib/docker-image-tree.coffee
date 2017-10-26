@@ -32,7 +32,6 @@ exports.annotateTree = annotateTree = (layer_mtimes, tree) ->
 		children: _.mapValues(tree.children, annotateTree.bind(null, layer_mtimes))
 	}
 
-exports.dockerImageTree = dockerImageTree = ->
-	dockerUtils.getDocker()
-	.call('listImages', all: true)
+exports.dockerImageTree = dockerImageTree = (docker) ->
+	docker.listImages(all: true)
 	.then(createTree)

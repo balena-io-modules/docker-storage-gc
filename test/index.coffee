@@ -2,7 +2,7 @@ Promise = require 'bluebird'
 { expect } = require 'chai'
 _ = require 'lodash'
 
-gc = require('../lib/index')
+DockerGC = require('../lib/index')
 dockerUtils = require('../lib/docker.coffee')
 
 SKIP_GC_TEST = process.env.SKIP_GC_TEST == '1' || false
@@ -18,12 +18,18 @@ pullAsync = (docker, tag) ->
 			stream.once('error', reject)
 			stream.once('end', resolve)
 
-dockerUtils.getDocker()
+dockerUtils.getDocker({})
 .then (docker) ->
 	# This test case is a little weird, it requires that no other images are present on
 	# the system to ensure that the correct one is being removed. Because of this, you
 	# can use the SKIP_GC_TEST env var to inform the test suite not to run this test
 	describe 'Garbage collection', ->
+		before ->
+			@dockerStorage = new DockerGC()
+			# Use either local or CI docker
+			@dockerStorage.setDocker({})
+			.then =>
+				@dockerStorage.setupMtimeStream()
 
 		it 'should remove the LRU image', ->
 			this.timeout(600000)
@@ -35,10 +41,10 @@ dockerUtils.getDocker()
 				'debian:squeeze'
 				'ubuntu:lucid'
 			], (image) -> pullAsync(docker, image)
-			.then ->
+			.then =>
 				# Attempt to remove a single byte, which will remove the LRU image,
 				# which should be alpine
-				gc.garbageCollect(1)
+				@dockerStorage.garbageCollect(1)
 			.then ->
 				Promise.all [
 					docker.getImage('alpine:3.1').inspect()
@@ -65,8 +71,8 @@ dockerUtils.getDocker()
 				.inspect()
 			.then (img) ->
 				img.Size + 1
-			.then (size) ->
-				gc.garbageCollect(size)
+			.then (size) =>
+				@dockerStorage.garbageCollect(size)
 			.then ->
 				Promise.all [
 					docker.getImage('alpine:3.1').inspect()
