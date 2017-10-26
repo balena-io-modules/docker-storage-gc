@@ -82,3 +82,13 @@ dockerUtils.getDocker({})
 			.then (imgs) ->
 				if not _.isEqual(imgs, [false, false, true])
 					throw new Error('Incorrect images removed')
+
+		it 'should get daemon host disk usage', ->
+			this.timeout(600000)
+			@dockerStorage.getDaemonFreeSpace()
+			.then (du) ->
+				expect(du).to.be.an('object')
+				expect(du).to.have.property('free').that.is.a('number')
+				expect(du).to.have.property('used').that.is.a('number')
+				expect(du).to.have.property('total').that.is.a('number')
+

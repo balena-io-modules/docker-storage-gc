@@ -11,7 +11,7 @@
   "dependencies": {
     "JSONStream": "^1.0.7",
     "bluebird": "^3.0.5",
-    "dockerode": "^2.2.3",
+    "dockerode": "^2.5.3",
     "event-stream": "^3.3.2",
     "lodash": "^3.10.1",
     "mz": "^2.6.0"
