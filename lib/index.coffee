@@ -7,19 +7,24 @@ _ = require 'lodash'
 { createCompare, lruSort } = require './lru'
 dockerUtils = require './docker'
 
-current_mtimes = {}
+class DockerGC
+	setDocker: (hostObj) ->
+		@currentMtimes = {}
+		@hostObj = hostObj
+		dockerUtils.getDocker(hostObj)
+		.then (docker) =>
+			@docker = docker
 
-dockerMtimeStream()
-.then (stream) ->
-	stream
-	.on 'data', (layer_mtimes) ->
-		current_mtimes = layer_mtimes
+	setupMtimeStream: () ->
+		dockerMtimeStream(@docker)
+		.then (stream) =>
+			stream
+			.on 'data', (layer_mtimes) =>
+				@currentMtimes = layer_mtimes
 
-exports.garbageCollect = (reclaimSpace) ->
-	dockerUtils.getDocker()
-	.then (docker) ->
-		dockerImageTree()
-		.then(annotateTree.bind(null, current_mtimes))
+	garbageCollect: (reclaimSpace) ->
+		dockerImageTree(@docker)
+		.then(annotateTree.bind(null, @currentMtimes))
 		.then (tree) ->
 			lruSort(tree, createCompare(1, 0))
 		.then (candidates) ->
@@ -33,20 +38,21 @@ exports.garbageCollect = (reclaimSpace) ->
 				return false if size >= reclaimSpace
 				size += image.size
 				return true
-		.map (image) ->
+		.map (image) =>
 			# Request deletion of each image
-			console.log("Removing image: #{image.repoTags[0]}")
-			docker.getImage(image.id).remove()
+			console.log("GC: Removing image: #{image.repoTags[0]}")
+			@docker.getImage(image.id).remove()
 			.return(true)
 			.catch (e) ->
 				# TODO: If an image fails to be removed, this means that the total space
 				# removed will actually be less than the requested amount. We need to
 				# take into account if an image fails to be removed, and either select a
 				# new one or retry
-				console.log('Failed to remove image: ', image)
+				console.log('GC: Failed to remove image: ', image)
 				console.log(e)
 				return false
 		.then (results) ->
-			console.log('Done.')
+			console.log('GC: Done.')
 			return _.every(results)
 
+module.exports = DockerGC
