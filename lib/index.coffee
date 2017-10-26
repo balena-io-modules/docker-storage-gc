@@ -57,19 +57,14 @@ class DockerGC
 
 	getDaemonFreeSpace: () ->
 		# Ensure the image is available (if it is this is essentially a no-op)
-		@docker.pull('alpine')
+		@docker.pull('alpine:3.1')
 		.then (stream) ->
 			new Promise (resolve, reject) ->
 				stream.resume()
 				stream.once('error', reject)
 				stream.once('end', resolve)
 		.then =>
-			@docker.run 'alpine',
-				[
-					'/bin/sh',
-					'-c',
-					"df -k / | tail -n +2 | awk '{ print $3,$4 \"\\t\" }'"
-				]
+			@docker.run('alpine:3.1',	[ '/bin/df', '-B', '1', '/' ])
 			.then (container) ->
 				container.logs(stdout: 1)
 			.then (logs) ->
@@ -80,13 +75,19 @@ class DockerGC
 					.on('end', () -> resolve(logStr))
 					.on('error', reject)
 			.then (spaceStr) ->
-				parts = spaceStr.split(/\s+/)
-				used = parseInt(parts[0])
+				# First split the lines, as we're only interested in the second one
+				lines = spaceStr.trim().split(/\r?\n/)
+				if lines.length isnt 2
+					throw new Error('Coult not parse df output')
+
+				parts = lines[1].split(/\s+/)
 				total = parseInt(parts[1])
+				used = parseInt(parts[2])
+				free = parseInt(parts[3])
 				return {
 					used,
 					total,
-					free: total - used
+					free
 				}
 
 module.exports = DockerGC
