@@ -10,8 +10,8 @@ dockerUtils = require './docker'
 class DockerGC
 	setDocker: (hostObj) ->
 		@currentMtimes = {}
-		@hostObj = hostObj
-		dockerUtils.getDocker(hostObj)
+		@hostObj = _.defaults({ Promise }, hostObj)
+		dockerUtils.getDocker(@hostObj)
 		.then (docker) =>
 			@docker = docker
 
