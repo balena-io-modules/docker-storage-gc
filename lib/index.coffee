@@ -59,9 +59,9 @@ class DockerGC
 
 	getDaemonFreeSpace: () ->
 		# Ensure the image is available (if it is this is essentially a no-op)
-		@dockerProgress.pull('alpine:3.1', _.noop)
+		@dockerProgress.pull('alpine', _.noop)
 		.then =>
-			@docker.run('alpine:3.1',	[ '/bin/df', '-B', '1', '/' ])
+			@docker.run('alpine', [ '/bin/df', '-B', '1', '/' ])
 			.then (container) ->
 				container.logs(stdout: 1)
 			.then (logs) ->
