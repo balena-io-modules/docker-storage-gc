@@ -14,8 +14,16 @@ class DockerGC
 		@hostObj = _.defaults({ Promise }, hostObj)
 		@dockerProgress = new DockerProgress(@hostObj)
 		dockerUtils.getDocker(@hostObj)
-		.then (docker) =>
-			@docker = docker
+		.then (@docker) =>
+			# Docker info can take a while so do it here,
+			# and don't wait on the results
+			@baseImagePromise = @getDaemonArchitecture()
+			.then (arch) ->
+				return switch arch
+					when 'arm64' then 'arm64v8/alpine:3.6'
+					when 'amd64' then 'alpine:3.6'
+					else
+						throw new Error('Could not detect architecture of remote host')
 
 	setupMtimeStream: () ->
 		dockerMtimeStream(@docker)
@@ -58,10 +66,11 @@ class DockerGC
 			return _.every(results)
 
 	getDaemonFreeSpace: () ->
-		# Ensure the image is available (if it is this is essentially a no-op)
-		@dockerProgress.pull('alpine', _.noop)
-		.then =>
-			@docker.run('alpine', [ '/bin/df', '-B', '1', '/' ])
+		@baseImagePromise.tap (baseImage) =>
+			# Ensure the image is available (if it is this is essentially a no-op)
+			@dockerProgress.pull(baseImage, _.noop)
+		.then (baseImage) =>
+			@docker.run(baseImage, [ '/bin/df', '-B', '1', '/' ])
 			.then (container) ->
 				container.logs(stdout: 1)
 			.then (logs) ->
@@ -86,5 +95,9 @@ class DockerGC
 					total,
 					free
 				}
+
+	getDaemonArchitecture: () ->
+		@docker.version()
+		.get('Arch')
 
 module.exports = DockerGC

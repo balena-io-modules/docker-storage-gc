@@ -92,3 +92,12 @@ dockerUtils.getDocker({})
 				expect(du).to.have.property('used').that.is.a('number')
 				expect(du).to.have.property('total').that.is.a('number')
 
+		it 'should get the correct architecture for a remote host', ->
+			@dockerStorage.getDaemonArchitecture()
+			.then (arch) ->
+				expect(arch).to.be.a('string')
+
+		it 'should set a base image to be used', ->
+			@dockerStorage.baseImagePromise.then (img) ->
+				expect(img).to.be.a('string')
+
