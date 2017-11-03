@@ -1,6 +1,7 @@
 Promise = require 'bluebird'
 es = require 'event-stream'
 _ = require 'lodash'
+{ DockerProgress } = require 'docker-progress'
 
 { dockerMtimeStream } = require './docker-event-stream'
 { dockerImageTree, annotateTree } = require './docker-image-tree'
@@ -11,6 +12,7 @@ class DockerGC
 	setDocker: (hostObj) ->
 		@currentMtimes = {}
 		@hostObj = _.defaults({ Promise }, hostObj)
+		@dockerProgress = new DockerProgress(@hostObj)
 		dockerUtils.getDocker(@hostObj)
 		.then (docker) =>
 			@docker = docker
@@ -57,12 +59,7 @@ class DockerGC
 
 	getDaemonFreeSpace: () ->
 		# Ensure the image is available (if it is this is essentially a no-op)
-		@docker.pull('alpine:3.1')
-		.then (stream) ->
-			new Promise (resolve, reject) ->
-				stream.resume()
-				stream.once('error', reject)
-				stream.once('end', resolve)
+		@dockerProgress.pull('alpine:3.1', _.noop)
 		.then =>
 			@docker.run('alpine:3.1',	[ '/bin/df', '-B', '1', '/' ])
 			.then (container) ->
