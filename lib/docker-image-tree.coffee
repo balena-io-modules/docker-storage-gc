@@ -1,5 +1,5 @@
 _ = require 'lodash'
-dockerUtils = require './docker'
+Promise = require 'bluebird'
 
 saneRepoTags = (repoTags) ->
 	return [] if !repoTags?
@@ -7,7 +7,15 @@ saneRepoTags = (repoTags) ->
 
 exports.createNode = createNode = (id) -> { id: id, size: 0, repoTags: [], mtime: null, children: {} }
 
-exports.createTree = createTree = (images) ->
+getMtime = (tree, layer_mtimes) ->
+	mtime = layer_mtimes[tree.id]
+	if mtime == undefined
+		key = _.head(_.intersection(_.keys(layer_mtimes), tree.repoTags))
+		if key?
+			mtime = layer_mtimes[key]
+	return mtime
+
+exports.createTree = createTree = (images, layer_mtimes) ->
 	tree = {}
 	root = '0000000000000000000000000000000000000000000000000000000000000000'
 
@@ -18,20 +26,15 @@ exports.createTree = createTree = (images) ->
 
 		node.repoTags = saneRepoTags(image.RepoTags)
 		node.size = image.Size
+		node.mtime = getMtime(node, layer_mtimes) or Date.now()
 		parent.children[image.Id] = node
 
+	tree[root].mtime = Date.now()
 	return tree[root]
 
-exports.annotateTree = annotateTree = (layer_mtimes, tree) ->
-	return {} if !tree?
-	return {
-		id: tree.id
-		repoTags: tree.repoTags
-		size: tree.size
-		mtime: layer_mtimes[tree.id] or Date.now()
-		children: _.mapValues(tree.children, annotateTree.bind(null, layer_mtimes))
-	}
-
-exports.dockerImageTree = dockerImageTree = (docker) ->
-	docker.listImages(all: true)
-	.then(createTree)
+exports.dockerImageTree = (docker, layer_mtimes) ->
+	Promise.join(
+		docker.listImages(all: true)
+		layer_mtimes
+		createTree
+	)

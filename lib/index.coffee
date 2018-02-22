@@ -4,7 +4,7 @@ _ = require 'lodash'
 { DockerProgress } = require 'docker-progress'
 
 { dockerMtimeStream } = require './docker-event-stream'
-{ dockerImageTree, annotateTree } = require './docker-image-tree'
+{ dockerImageTree } = require './docker-image-tree'
 { createCompare, lruSort } = require './lru'
 dockerUtils = require './docker'
 
@@ -33,8 +33,7 @@ class DockerGC
 				@currentMtimes = layer_mtimes
 
 	garbageCollect: (reclaimSpace) ->
-		dockerImageTree(@docker)
-		.then(annotateTree.bind(null, @currentMtimes))
+		dockerImageTree(@docker, @currentMtimes)
 		.then (tree) ->
 			lruSort(tree, createCompare(1, 0))
 		.then (candidates) ->
