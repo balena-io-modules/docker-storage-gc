@@ -8,6 +8,16 @@ _ = require 'lodash'
 { createCompare, lruSort } = require './lru'
 dockerUtils = require './docker'
 
+streamToString = (stream) ->
+	new Promise (resolve, reject) ->
+		chunks = []
+		stream
+		.on('error', reject)
+		.on 'data', (chunk) ->
+			chunks.push(chunk)
+		.on 'end', ->
+			resolve(Buffer.concat(chunks).toString())
+
 class DockerGC
 	setDocker: (hostObj) ->
 		@currentMtimes = {}
@@ -64,36 +74,36 @@ class DockerGC
 			console.log('GC: Done.')
 			return _.every(results)
 
+	getOutput: (image, command) ->
+		Promise.using @runDisposer(image, command), (container) ->
+			container.logs(stdout: true)
+			.then (logs) ->
+				streamToString(logs)
+
+	runDisposer: (image, command) ->
+		@docker.run(image, command)
+		.disposer (container) ->
+			container.wait()
+			.then ->
+				container.remove()
+
 	getDaemonFreeSpace: () ->
 		@baseImagePromise.tap (baseImage) =>
 			# Ensure the image is available (if it is this is essentially a no-op)
 			@dockerProgress.pull(baseImage, _.noop)
 		.then (baseImage) =>
-			@docker.run(baseImage, [ '/bin/df', '-B', '1', '/' ])
-			.then (container) ->
-				container.logs(stdout: 1)
-			.then (logs) ->
-				new Promise (resolve, reject) ->
-					logStr = ''
-					logs
-					.on('data', (data) -> logStr += data.toString('utf-8'))
-					.on('end', () -> resolve(logStr))
-					.on('error', reject)
-			.then (spaceStr) ->
-				# First split the lines, as we're only interested in the second one
-				lines = spaceStr.trim().split(/\r?\n/)
-				if lines.length isnt 2
-					throw new Error('Coult not parse df output')
+			@getOutput(baseImage, [ '/bin/df', '-B', '1', '/' ])
+		.then (spaceStr) ->
+			# First split the lines, as we're only interested in the second one
+			lines = spaceStr.trim().split(/\r?\n/)
+			if lines.length isnt 2
+				throw new Error('Coult not parse df output')
 
-				parts = lines[1].split(/\s+/)
-				total = parseInt(parts[1])
-				used = parseInt(parts[2])
-				free = parseInt(parts[3])
-				return {
-					used,
-					total,
-					free
-				}
+			parts = lines[1].split(/\s+/)
+			total = parseInt(parts[1])
+			used = parseInt(parts[2])
+			free = parseInt(parts[3])
+			return { used, total, free }
 
 	getDaemonArchitecture: () ->
 		@docker.version()
