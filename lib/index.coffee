@@ -1,12 +1,45 @@
 Promise = require 'bluebird'
-es = require 'event-stream'
 _ = require 'lodash'
 { DockerProgress } = require 'docker-progress'
 
 { dockerMtimeStream } = require './docker-event-stream'
 { dockerImageTree } = require './docker-image-tree'
-{ createCompare, lruSort } = require './lru'
 dockerUtils = require './docker'
+
+getUnusedTreeLeafs = (tree, result=[]) ->
+	if not tree.removed
+		children = _(tree.children)
+		.values()
+		.filter(_.negate(_.property('removed')))
+		.value()
+		if children.length == 0 and not tree.isUsedByAContainer
+			result.push(tree)
+		else
+			for child in children
+				getUnusedTreeLeafs(child, result)
+	return result
+
+getImagesToRemove = (tree, reclaimSpace) ->
+	# Removes the oldest, largest leafs first.
+	# This should avoid trying to remove images with children.
+	tree = _.clone(tree)
+	result = []
+	size = 0
+	while size < reclaimSpace
+		leafs = _.orderBy(
+			getUnusedTreeLeafs(tree)
+			[ 'mtime', 'size' ]
+			[ 'asc', 'desc' ]
+		)
+		if leafs.length == 0
+			break
+		leaf = leafs[0]
+		if leaf != tree
+			# don't remove the tree root
+			result.push(leaf)
+			size += leaf.size
+		leaf.removed = true
+	return result
 
 streamToString = (stream) ->
 	new Promise (resolve, reject) ->
@@ -45,34 +78,13 @@ class DockerGC
 	garbageCollect: (reclaimSpace) ->
 		dockerImageTree(@docker, @currentMtimes)
 		.then (tree) ->
-			lruSort(tree, createCompare(1, 0))
-		.then (candidates) ->
-			# Remove candidates until we reach `reclaimSpace` bytes
-			# Candidates is a list of images, with the least recently used
-			# first in the list
-
-			# Decide on the images to remove
-			size = 0
-			return _.takeWhile candidates, (image) ->
-				return false if size >= reclaimSpace
-				size += image.size
-				return true
-		.map (image) =>
-			# Request deletion of each image
+			getImagesToRemove(tree, reclaimSpace)
+		.each (image) =>
 			console.log("GC: Removing image: #{image.repoTags[0]}")
-			@docker.getImage(image.id).remove()
-			.return(true)
-			.catch (e) ->
-				# TODO: If an image fails to be removed, this means that the total space
-				# removed will actually be less than the requested amount. We need to
-				# take into account if an image fails to be removed, and either select a
-				# new one or retry
+			@docker.getImage(image.id).remove(noprune: true)
+			.tapCatch (e) ->
 				console.log('GC: Failed to remove image: ', image)
 				console.log(e)
-				return false
-		.then (results) ->
-			console.log('GC: Done.')
-			return _.every(results)
 
 	getOutput: (image, command) ->
 		Promise.using @runDisposer(image, command), (container) ->

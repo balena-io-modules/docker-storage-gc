@@ -1,0 +1,38 @@
+[
+	{
+		"Id": "f9b236031ef4f62b4daa19b6b68b92553c2866d6dbb71e572ee7890ccf055d12",
+		"Names": [
+			"/youthful_swartz"
+		],
+		"Image": "arm64v8/alpine:3.6",
+		"ImageID": "sha256:5b0d59026729b68570d99bc4f3f7c31a2e4f2a5736435641565d93e7c25bd2c3",
+		"Command": "/bin/df -B 1 /",
+		"Created": 1519081742,
+		"Ports": [],
+		"Labels": {},
+		"State": "exited",
+		"Status": "Exited (0) 2 days ago",
+		"HostConfig": {
+			"NetworkMode": "default"
+		},
+		"NetworkSettings": {
+			"Networks": {
+				"bridge": {
+					"IPAMConfig": null,
+					"Links": null,
+					"Aliases": null,
+					"NetworkID": "2dde83e5b3f4625247e689d2bb654ca501f067f0b1f59f80a80d86baa2b4f245",
+					"EndpointID": "",
+					"Gateway": "",
+					"IPAddress": "",
+					"IPPrefixLen": 0,
+					"IPv6Gateway": "",
+					"GlobalIPv6Address": "",
+					"GlobalIPv6PrefixLen": 0,
+					"MacAddress": ""
+				}
+			}
+		},
+		"Mounts": []
+	}
+]

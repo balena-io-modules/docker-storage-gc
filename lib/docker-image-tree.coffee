@@ -15,7 +15,15 @@ getMtime = (tree, layer_mtimes) ->
 			mtime = layer_mtimes[key]
 	return mtime
 
-exports.createTree = createTree = (images, layer_mtimes) ->
+exports.createTree = createTree = (images, containers, layer_mtimes) ->
+	usedImageIds = new Set(
+		_(containers)
+		.map('ImageID')
+		.map (imageId) ->
+			if imageId.startsWith('sha256:')
+				imageId = imageId.slice(7)
+			return imageId
+	)
 	tree = {}
 	root = '0000000000000000000000000000000000000000000000000000000000000000'
 
@@ -27,14 +35,17 @@ exports.createTree = createTree = (images, layer_mtimes) ->
 		node.repoTags = saneRepoTags(image.RepoTags)
 		node.size = image.Size
 		node.mtime = getMtime(node, layer_mtimes) or Date.now()
+		node.isUsedByAContainer = usedImageIds.has(image.Id)
 		parent.children[image.Id] = node
 
 	tree[root].mtime = Date.now()
+	tree[root].isUsedByAContainer = false
 	return tree[root]
 
 exports.dockerImageTree = (docker, layer_mtimes) ->
 	Promise.join(
 		docker.listImages(all: true)
+		docker.listContainers(all: true)
 		layer_mtimes
 		createTree
 	)
