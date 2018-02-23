@@ -6,6 +6,7 @@ DockerGC = require('../lib/index')
 dockerUtils = require('../lib/docker.coffee')
 
 SKIP_GC_TEST = process.env.SKIP_GC_TEST == '1' || false
+IMAGES = [ 'alpine:3.1', 'debian:squeeze', 'ubuntu:lucid' ]
 
 promiseToBool = (p) ->
 	p.return(true).catchReturn(false)
@@ -36,21 +37,15 @@ dockerUtils.getDocker({})
 			return Promise.resolve() if SKIP_GC_TEST
 
 			# first pull some images, so we know in which order they are referenced
-			Promise.map [
-				'alpine:3.1'
-				'debian:squeeze'
-				'ubuntu:lucid'
-			], (image) -> pullAsync(docker, image)
+			Promise.each IMAGES, (image) ->
+				pullAsync(docker, image)
 			.then =>
 				# Attempt to remove a single byte, which will remove the LRU image,
 				# which should be alpine
 				@dockerStorage.garbageCollect(1)
 			.then ->
-				Promise.all [
-					docker.getImage('alpine:3.1').inspect()
-					docker.getImage('debian:squeeze').inspect()
-					docker.getImage('ubuntu:lucid').inspect()
-				].map(promiseToBool)
+				Promise.map IMAGES, (image) ->
+					promiseToBool(docker.getImage(image).inspect())
 			.then (imgs) ->
 				if not _.isEqual(imgs, [false, true, true])
 					throw new Error('Incorrect images removed!')
@@ -61,24 +56,15 @@ dockerUtils.getDocker({})
 
 			# Get the size of the first image, so we can add one to it to remove
 			# the next one in addition
-			Promise.map [
-				'alpine:3.1'
-				'debian:squeeze'
-				'ubuntu:lucid'
-			], (image) -> pullAsync(docker, image)
+			Promise.each IMAGES, (image) ->
+				pullAsync(docker, image)
 			.then ->
-				docker.getImage('alpine:3.1')
-				.inspect()
-			.then (img) ->
-				img.Size + 1
+				docker.getImage('alpine:3.1').inspect().get('Size')
 			.then (size) =>
-				@dockerStorage.garbageCollect(size)
+				@dockerStorage.garbageCollect(size + 1)
 			.then ->
-				Promise.all [
-					docker.getImage('alpine:3.1').inspect()
-					docker.getImage('debian:squeeze').inspect()
-					docker.getImage('ubuntu:lucid').inspect()
-				].map(promiseToBool)
+				Promise.map IMAGES, (image) ->
+					promiseToBool(docker.getImage(image).inspect())
 			.then (imgs) ->
 				if not _.isEqual(imgs, [false, false, true])
 					throw new Error('Incorrect images removed')

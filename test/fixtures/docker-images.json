@@ -82,5 +82,19 @@
         "Size": 125151141,
         "VirtualSize": 125151141,
         "Labels": null
+    },
+    {
+        "Id": "5b0d59026729b68570d99bc4f3f7c31a2e4f2a5736435641565d93e7c25bd2c3",
+        "ParentId": "",
+        "RepoTags": [
+            "busybox:latest"
+        ],
+        "RepoDigests": [
+            "<none>@<none>"
+        ],
+        "Created": 1436814951,
+        "Size": 125151141,
+        "VirtualSize": 125151141,
+        "Labels": null
     }
 ]

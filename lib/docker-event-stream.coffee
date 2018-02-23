@@ -17,11 +17,11 @@ exports.parseEventStream = parseEventStream = ->
 
 	es.pipeline(
 		JSONStream.parse()
-		es.mapSync ({status, id, from, time}) ->
+		es.mapSync ({ status, id, from, timeNano }) ->
 			if status in IMAGE_EVENTS
-				layer_mtimes[id] = time * 1000
+				layer_mtimes[id] = timeNano
 			else if status in CONTAINER_EVENTS
-				layer_mtimes[from] = time * 1000
+				layer_mtimes[from] = timeNano
 			return layer_mtimes
 	)
 

@@ -1,5 +1,5 @@
 _ = require 'lodash'
-dockerUtils = require './docker'
+Promise = require 'bluebird'
 
 saneRepoTags = (repoTags) ->
 	return [] if !repoTags?
@@ -7,7 +7,24 @@ saneRepoTags = (repoTags) ->
 
 exports.createNode = createNode = (id) -> { id: id, size: 0, repoTags: [], mtime: null, children: {} }
 
-exports.createTree = createTree = (images) ->
+getMtime = (tree, layer_mtimes) ->
+	mtime = layer_mtimes[tree.id]
+	if mtime == undefined
+		key = _.head(_.intersection(_.keys(layer_mtimes), tree.repoTags))
+		if key?
+			mtime = layer_mtimes[key]
+	return mtime
+
+exports.createTree = createTree = (images, containers, layer_mtimes) ->
+	now = Date.now() * 10 ** 6  # convert to nanoseconds
+	usedImageIds = new Set(
+		_(containers)
+		.map('ImageID')
+		.map (imageId) ->
+			if imageId.startsWith('sha256:')
+				imageId = imageId.slice(7)
+			return imageId
+	)
 	tree = {}
 	root = '0000000000000000000000000000000000000000000000000000000000000000'
 
@@ -18,20 +35,18 @@ exports.createTree = createTree = (images) ->
 
 		node.repoTags = saneRepoTags(image.RepoTags)
 		node.size = image.Size
+		node.mtime = getMtime(node, layer_mtimes) or now
+		node.isUsedByAContainer = usedImageIds.has(image.Id)
 		parent.children[image.Id] = node
 
+	tree[root].mtime = now
+	tree[root].isUsedByAContainer = false
 	return tree[root]
 
-exports.annotateTree = annotateTree = (layer_mtimes, tree) ->
-	return {} if !tree?
-	return {
-		id: tree.id
-		repoTags: tree.repoTags
-		size: tree.size
-		mtime: layer_mtimes[tree.id] or Date.now()
-		children: _.mapValues(tree.children, annotateTree.bind(null, layer_mtimes))
-	}
-
-exports.dockerImageTree = dockerImageTree = (docker) ->
-	docker.listImages(all: true)
-	.then(createTree)
+exports.dockerImageTree = (docker, layer_mtimes) ->
+	Promise.join(
+		docker.listImages(all: true)
+		docker.listContainers(all: true)
+		layer_mtimes
+		createTree
+	)
