@@ -75,13 +75,23 @@ class DockerGC
 			.on 'data', (layer_mtimes) =>
 				@currentMtimes = layer_mtimes
 
+	removeImage: (image) ->
+		if image.repoTags
+			# Docker will complain if we delete by id an image referenced by more
+			# than one repository
+			Promise.each image.repoTags, (tag) =>
+				console.log("GC: Removing image: #{tag} (#{image.id})")
+				@docker.getImage(tag).remove(noprune: true)
+		else
+			console.log("GC: Removing image: #{image.id}")
+			@docker.getImage(image.id).remove(noprune: true)
+
 	garbageCollect: (reclaimSpace) ->
 		dockerImageTree(@docker, @currentMtimes)
 		.then (tree) ->
 			getImagesToRemove(tree, reclaimSpace)
 		.each (image) =>
-			console.log("GC: Removing image: #{image.repoTags[0]}")
-			@docker.getImage(image.id).remove(noprune: true)
+			@removeImage(image)
 			.tapCatch (e) ->
 				console.log('GC: Failed to remove image: ', image)
 				console.log(e)

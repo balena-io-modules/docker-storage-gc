@@ -37,8 +37,12 @@ dockerUtils.getDocker({})
 			return Promise.resolve() if SKIP_GC_TEST
 
 			# first pull some images, so we know in which order they are referenced
-			Promise.each IMAGES, (image) ->
-				pullAsync(docker, image)
+			pullAsync(docker, IMAGES[0])
+			.then ->
+				docker.getImage(IMAGES[0]).tag(repo: 'some-repo', tag: 'some-tag')
+			.then ->
+				Promise.each IMAGES.slice(1), (image) ->
+					pullAsync(docker, image)
 			.then =>
 				# Attempt to remove a single byte, which will remove the LRU image,
 				# which should be alpine
@@ -59,7 +63,7 @@ dockerUtils.getDocker({})
 			Promise.each IMAGES, (image) ->
 				pullAsync(docker, image)
 			.then ->
-				docker.getImage('alpine:3.1').inspect().get('Size')
+				docker.getImage(IMAGES[0]).inspect().get('Size')
 			.then (size) =>
 				@dockerStorage.garbageCollect(size + 1)
 			.then ->
