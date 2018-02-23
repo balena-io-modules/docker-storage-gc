@@ -16,6 +16,7 @@ getMtime = (tree, layer_mtimes) ->
 	return mtime
 
 exports.createTree = createTree = (images, containers, layer_mtimes) ->
+	now = Date.now() * 10 ** 6  # convert to nanoseconds
 	usedImageIds = new Set(
 		_(containers)
 		.map('ImageID')
@@ -34,11 +35,11 @@ exports.createTree = createTree = (images, containers, layer_mtimes) ->
 
 		node.repoTags = saneRepoTags(image.RepoTags)
 		node.size = image.Size
-		node.mtime = getMtime(node, layer_mtimes) or Date.now()
+		node.mtime = getMtime(node, layer_mtimes) or now
 		node.isUsedByAContainer = usedImageIds.has(image.Id)
 		parent.children[image.Id] = node
 
-	tree[root].mtime = Date.now()
+	tree[root].mtime = now
 	tree[root].isUsedByAContainer = false
 	return tree[root]
 
