@@ -98,7 +98,7 @@ class DockerGC
 
 	getOutput: (image, command) ->
 		Promise.using @runDisposer(image, command), (container) ->
-			container.logs(stdout: true)
+			container.logs(stdout: true, follow: true)
 			.then (logs) ->
 				streamToString(logs)
 
