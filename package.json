@@ -11,7 +11,7 @@
   "dependencies": {
     "JSONStream": "^1.0.7",
     "bluebird": "^3.0.5",
-    "docker-progress": "^2.8.1",
+    "docker-progress": "^4.0.0",
     "dockerode": "^2.5.3",
     "event-stream": "^3.3.2",
     "lodash": "^4.17.5",
