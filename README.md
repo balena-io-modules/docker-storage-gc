@@ -14,7 +14,9 @@ layers keep a reference to their parent layer, removal is not always possible.
 The data structure that emerges from the layers is a tree of layers where each
 layer points to their parent.
 
-![Layer tree illustration](/doc/layer_tree.png?raw=true)
+<p align="center">
+  <img width="300" src="/doc/layer_tree.png?raw=true" alt="Layer tree illustration">
+</p>
 
 In order to have a single root for all the layer we assume a virtual empty
 layer that all layers have as a parent and that is never deleted.
@@ -28,7 +30,9 @@ garbage collector we only need to know which layers of our tree are entrypoints
 for the images. Annotating the above tree with this information we end up with
 something like this:
 
-![Image tree illustration](/doc/image_tree.png?raw=true)
+<p align="center">
+  <img width="300" src="/doc/image_tree.png?raw=true" alt="Image tree illustration">
+</p>
 
 Whenever docker is asked to delete an image it will delete the layer the image
 points to and all its ancestors until it hits a layer that is being used by
