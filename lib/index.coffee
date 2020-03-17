@@ -6,7 +6,7 @@ _ = require 'lodash'
 { dockerImageTree } = require './docker-image-tree'
 dockerUtils = require './docker'
 
-getUnusedTreeLeafs = (tree, result=[]) ->
+getUnusedTreeLeafs = (tree, result = []) ->
 	if not tree.removed
 		children = _(tree.children)
 		.values()
@@ -68,7 +68,7 @@ class DockerGC
 					else
 						throw new Error('Could not detect architecture of remote host')
 
-	setupMtimeStream: () ->
+	setupMtimeStream: ->
 		dockerMtimeStream(@docker)
 		.then (stream) =>
 			stream
@@ -109,7 +109,7 @@ class DockerGC
 			.then ->
 				container.remove()
 
-	getDaemonFreeSpace: () ->
+	getDaemonFreeSpace: ->
 		@baseImagePromise.tap (baseImage) =>
 			# Ensure the image is available (if it is this is essentially a no-op)
 			@dockerProgress.pull(baseImage, _.noop)
@@ -127,7 +127,7 @@ class DockerGC
 			free = parseInt(parts[3])
 			return { used, total, free }
 
-	getDaemonArchitecture: () ->
+	getDaemonArchitecture: ->
 		@docker.version()
 		.get('Arch')
 
