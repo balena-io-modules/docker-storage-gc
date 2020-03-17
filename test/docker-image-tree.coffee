@@ -7,16 +7,22 @@ es = require 'event-stream'
 { parseEventStream } = require '../lib/docker-event-stream'
 { createTree } = require '../lib/docker-image-tree'
 
+dockerUtils = require('../lib/docker.coffee')
+
 getLayerMtimes = ->
-	new Promise (resolve, reject) ->
-		mtimes = null
-		fs.createReadStream(__dirname + '/fixtures/docker-events.json')
-		.pipe(parseEventStream())
-		.on 'error', reject
-		.pipe es.mapSync (data) ->
-			mtimes = data
-		.on 'end', -> resolve(mtimes)
-		.on 'error', reject
+	dockerUtils.getDocker({})
+	.then (docker) ->
+		parseEventStream(docker)
+	.then (streamParser) ->
+		new Promise (resolve, reject) ->
+			mtimes = null
+			fs.createReadStream(__dirname + '/fixtures/docker-events.json')
+			.pipe(streamParser)
+			.on 'error', reject
+			.pipe es.mapSync (data) ->
+				mtimes = data
+			.on 'end', -> resolve(mtimes)
+			.on 'error', reject
 
 describe 'createTree', ->
 	it.skip 'should work with empty input', ->
