@@ -1,6 +1,6 @@
 {
   "name": "docker-storage-gc",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "main": "build/index.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha --compilers coffee:coffee-script/register test",
