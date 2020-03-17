@@ -1,9 +1,10 @@
 {
   "name": "docker-storage-gc",
   "version": "2.2.0",
-  "main": "lib/index.coffee",
+  "main": "build/index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha --compilers coffee:coffee-script/register test"
+    "test": "./node_modules/.bin/mocha --compilers coffee:coffee-script/register test",
+    "prepare": "coffee -o build -c lib"
   },
   "author": "",
   "license": "Apache 2.0",
