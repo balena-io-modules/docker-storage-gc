@@ -1,6 +1,6 @@
 {
   "name": "docker-storage-gc",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "main": "build/index.js",
   "scripts": {
     "lint": "resin-lint lib test tools",
