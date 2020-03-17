@@ -21,4 +21,4 @@ exports.createDot = (tree) ->
 		# recurse to children
 		.concat((_createDot(child) for own id, child of tree.children)...)
 
-	return "digraph {\n" + _createDot(tree).join('\n') + '\n}\n'
+	return 'digraph {\n' + _createDot(tree).join('\n') + '\n}\n'
