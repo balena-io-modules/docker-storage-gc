@@ -76,7 +76,7 @@ class DockerGC
 				@currentMtimes = layer_mtimes
 
 	removeImage: (image) ->
-		if image.repoTags
+		if image.repoTags? and image.repoTags.length > 0
 			# Docker will complain if we delete by id an image referenced by more
 			# than one repository
 			Promise.each image.repoTags, (tag) =>
