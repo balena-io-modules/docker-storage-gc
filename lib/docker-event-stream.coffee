@@ -18,7 +18,7 @@ exports.parseEventStream = parseEventStream = (docker) ->
 		# listening and so set the last used time to 0 as we know it should be older than
 		# anything we've seen
 		for image in images
-			layer_mtimes[image.id] = 0
+			layer_mtimes[image.Id] = 0
 
 		return es.pipeline(
 			JSONStream.parse()
