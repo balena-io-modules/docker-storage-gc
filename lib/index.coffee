@@ -86,15 +86,23 @@ class DockerGC
 			console.log("GC: Removing image: #{image.id}")
 			@docker.getImage(image.id).remove(noprune: true)
 
-	garbageCollect: (reclaimSpace) ->
+	garbageCollect: (reclaimSpace, attemptAll = false) ->
+		err = null
 		dockerImageTree(@docker, @currentMtimes)
 		.then (tree) ->
 			getImagesToRemove(tree, reclaimSpace)
 		.each (image) =>
 			@removeImage(image)
-			.tapCatch (e) ->
+			.catch (e) ->
 				console.log('GC: Failed to remove image: ', image)
 				console.log(e)
+				if attemptAll
+					err ?= e
+				else
+					throw e
+		.then ->
+			if err?
+				throw err
 
 	getOutput: (image, command) ->
 		Promise.using @runDisposer(image, command), (container) ->
