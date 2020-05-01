@@ -6,6 +6,7 @@
     "lint": "resin-lint lib test tools",
     "pretest": "npm run lint",
     "test": "mocha --compilers coffee:coffee-script/register test",
+    "test:local": "LOCAL_TESTS=true npm test",
     "prepare": "coffee -o build -c lib"
   },
   "author": "",
