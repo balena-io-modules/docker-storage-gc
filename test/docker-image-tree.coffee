@@ -39,6 +39,7 @@ describe 'createTree', ->
 				'id': '0000000000000000000000000000000000000000000000000000000000000000',
 				'size': 0,
 				'repoTags': [],
+				'repoDigests': [],
 				'mtime': 1451606400000000000,
 				'isUsedByAContainer': false,
 				'children': {
@@ -46,6 +47,7 @@ describe 'createTree', ->
 						'id': '6d15899cef812e2876b9d5d43d4cd863eda7b278f7b52d00975f6a9a8e817c74',
 						'size': 125151141,
 						'repoTags': [],
+						'repoDigests': [],
 						'mtime': 1451606400000000000,
 						'isUsedByAContainer': false,
 						'children': {
@@ -55,6 +57,7 @@ describe 'createTree', ->
 								'repoTags': [
 									'project1'
 								],
+								'repoDigests': [],
 								'mtime': 1451606400000000000,
 								'isUsedByAContainer': false,
 								'children': {
@@ -64,6 +67,7 @@ describe 'createTree', ->
 										'repoTags': [
 											'project2'
 										],
+										'repoDigests': [],
 										'mtime': 1448576073085559863,
 										'isUsedByAContainer': false,
 										'children': {
@@ -71,6 +75,7 @@ describe 'createTree', ->
 												'id': '80dc79d29cd8618e678da508fc32f7289e6f72defb534f3f287731b1f8b355ea',
 												'size': 98872,
 												'repoTags': [],
+												'repoDigests': [],
 												'mtime': 1451606400000000000,
 												'isUsedByAContainer': false,
 												'children': {}
@@ -85,6 +90,7 @@ describe 'createTree', ->
 						'id': '902b87aaaec929e80541486828959f14fa061f529ad7f37ab300d4ef9f3a0dbf',
 						'size': 125151141,
 						'repoTags': [],
+						'repoDigests': [],
 						'mtime': 1451606400000000000,
 						'isUsedByAContainer': false,
 						'children': {
@@ -94,6 +100,7 @@ describe 'createTree', ->
 								'repoTags': [
 									'resin/project3'
 								],
+								'repoDigests': [],
 								'mtime': 1448576073203895800,
 								'isUsedByAContainer': false,
 								'children': {}
@@ -105,6 +112,9 @@ describe 'createTree', ->
 						'size': 125151141,
 						'repoTags': [
 							'busybox:latest'
+						],
+						'repoDigests': [
+							'sha256:a8cf7ff6367c2afa2a90acd081b484cbded349a7076e7bdf37a05279f276bc12'
 						],
 						'mtime': 1448576072937294800,
 						'isUsedByAContainer': true,

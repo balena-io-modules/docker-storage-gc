@@ -90,7 +90,7 @@
             "busybox:latest"
         ],
         "RepoDigests": [
-            "<none>@<none>"
+            "sha256:a8cf7ff6367c2afa2a90acd081b484cbded349a7076e7bdf37a05279f276bc12"
         ],
         "Created": 1436814951,
         "Size": 125151141,

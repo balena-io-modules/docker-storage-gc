@@ -1,18 +1,23 @@
 _ = require 'lodash'
 Promise = require 'bluebird'
 
-saneRepoTags = (repoTags) ->
-	return [] if !repoTags?
-	return if '<none>:<none>' in repoTags then [] else repoTags
+saneRepoAttrs = (repoAttrs) ->
+	return [] if !repoAttrs?
+	return if '<none>:<none>' in repoAttrs or '<none>@<none>' in repoAttrs then [] else repoAttrs
 
-exports.createNode = createNode = (id) -> { id: id, size: 0, repoTags: [], mtime: null, children: {} }
+exports.createNode = createNode = (id) -> { id: id, size: 0, repoTags: [], repoDigests: [], mtime: null, children: {} }
+
+getMtimeFrom = (layer_mtimes, attributes) ->
+	key = _.head(_.intersection(_.keys(layer_mtimes), attributes))
+	if key?
+		return layer_mtimes[key]
 
 getMtime = (tree, layer_mtimes) ->
 	mtime = layer_mtimes[tree.id]
 	if mtime == undefined
-		key = _.head(_.intersection(_.keys(layer_mtimes), tree.repoTags))
-		if key?
-			mtime = layer_mtimes[key]
+		mtime = getMtimeFrom(layer_mtimes, tree.repoTags)
+	if mtime == undefined
+		mtime = getMtimeFrom(layer_mtimes, tree.repoDigests)
 	return mtime
 
 exports.createTree = createTree = (images, containers, layer_mtimes) ->
@@ -33,7 +38,8 @@ exports.createTree = createTree = (images, containers, layer_mtimes) ->
 		parentId = image.ParentId or root
 		parent = tree[parentId] ?= createNode(parentId)
 
-		node.repoTags = saneRepoTags(image.RepoTags)
+		node.repoTags = saneRepoAttrs(image.RepoTags)
+		node.repoDigests = saneRepoAttrs(image.RepoDigests)
 		node.size = image.Size
 		node.mtime = getMtime(node, layer_mtimes) or now
 		node.isUsedByAContainer = usedImageIds.has(image.Id)

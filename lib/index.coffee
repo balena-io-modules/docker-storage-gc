@@ -76,15 +76,15 @@ class DockerGC
 				@currentMtimes = layer_mtimes
 
 	removeImage: (image) ->
-		if image.repoTags? and image.repoTags.length > 0
-			# Docker will complain if we delete by id an image referenced by more
-			# than one repository
-			Promise.each image.repoTags, (tag) =>
-				console.log("GC: Removing image: #{tag} (#{image.id})")
-				@docker.getImage(tag).remove(noprune: true)
-		else
-			console.log("GC: Removing image: #{image.id}")
-			@docker.getImage(image.id).remove(noprune: true)
+		return this.tryRemoveImageBy(image, image.repoTags) ||
+					 this.tryRemoveImageBy(image, image.repoDigests) ||
+					 this.tryRemoveImageBy(image, [image.id])
+
+	tryRemoveImageBy: (image, attributes) ->
+		if attributes? and attributes.length > 0
+			Promise.each attributes, (attribute) =>
+				console.log("GC: Removing image : #{attribute} (id: #{image.id})")
+				@docker.getImage(attribute).remove(noprune: true)
 
 	garbageCollect: (reclaimSpace, attemptAll = false) ->
 		err = null
