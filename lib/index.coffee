@@ -1,7 +1,8 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
+{ EventEmitter } = require 'eventemitter3'
+
 { DockerProgress } = require 'docker-progress'
-{ metrics } = require('@balena/node-metrics-gatherer')
 
 { dockerMtimeStream } = require './docker-event-stream'
 { dockerImageTree } = require './docker-image-tree'
@@ -20,7 +21,7 @@ getUnusedTreeLeafs = (tree, result = []) ->
 				getUnusedTreeLeafs(child, result)
 	return result
 
-getImagesToRemove = (tree, reclaimSpace, host) ->
+getImagesToRemove = (tree, reclaimSpace, metrics) ->
 	# Removes the oldest, largest leafs first.
 	# This should avoid trying to remove images with children.
 	tree = _.clone(tree)
@@ -41,7 +42,7 @@ getImagesToRemove = (tree, reclaimSpace, host) ->
 			size += leaf.size
 		leaf.removed = true
 
-	metrics.inc('gc_number_images_to_remove_total', result.length, { host: host })
+	metrics.emit('numberImagesToRemove', result.length)
 	return result
 
 streamToString = (stream) ->
@@ -54,24 +55,15 @@ streamToString = (stream) ->
 		.on 'end', ->
 			resolve(Buffer.concat(chunks).toString())
 
-describeMetrics = ->
-	metrics.describe.counter('gc_space_reclaimed_total', 'Disk space the GC must free', { labelNames: ['host'] })
-	metrics.describe.counter('c_number_images_to_remove_total', 'Number of images to be removed at a given time', { labelNames: ['host'] })
-	metrics.describe.counter('gc_image_removal_errors_total',  'Number of image removal errors by type', { labelNames: ['host', 'status_code'] })
-	metrics.describe.counter('gc_images_removed_total', 'Total number of images removed by all different methods', { labelNames: ['host', 'removal_type'] })
-	buckets = metrics.client.exponentialBuckets(4, Math.SQRT2, 29).map(Math.round)
-	metrics.describe.histogram('gc_duration_milliseconds', 'Milliseconds taken by the GC to free the reclaimed space', { labelNames: ['host'], buckets: buckets })
-
-recordGcRunTime = (t0, host) ->
+recordGcRunTime = (t0, metrics) ->
 	dt = process.hrtime(t0)
 	duration = dt[0] * 1000 + dt[1] / 1e6
-	metrics.histogram('gc_duration_milliseconds', duration, { host: host })
+	metrics.emit('gcRunTime', duration)
 
 class DockerGC
 
-	constructor: (host) ->
-		@host = host
-		_.once(describeMetrics)
+	constructor: ->
+		@metrics = new EventEmitter()
 
 	setDocker: (hostObj) ->
 		@currentMtimes = {}
@@ -107,28 +99,28 @@ class DockerGC
 				console.log("GC: Removing image : #{attribute} (id: #{image.id})")
 				@docker.getImage(attribute).remove(noprune: true)
 				.then =>
-					metrics.inc('gc_images_removed_total', 1, { host: @host, removal_type: removalType })
+					@metrics.emit('imageRemoved', removalType)
 
 	garbageCollect: (reclaimSpace, attemptAll = false) =>
 		err = null
 		startTime = process.hrtime()
-		metrics.inc('gc_space_reclaimed_total', reclaimSpace, { host: @host })
+		@metrics.emit('spaceReclaimed', reclaimSpace)
 		dockerImageTree(@docker, @currentMtimes)
 		.then (tree) =>
-			getImagesToRemove(tree, reclaimSpace, @host)
+			getImagesToRemove(tree, reclaimSpace, @metrics)
 		.each (image) =>
 			@removeImage(image)
 			.catch (e) =>
-				metrics.inc('gc_image_removal_errors_total', 1, { host: @host, status_code: e.statusCode })
+				@metrics.emit('imageRemovalError', e.statusCode)
 				console.log('GC: Failed to remove image: ', image)
 				console.log(e)
 				if attemptAll
 					err ?= e
 				else
-					recordGcRunTime(startTime, @host)
+					recordGcRunTime(startTime, @metrics)
 					throw e
 		.then =>
-			recordGcRunTime(startTime, @host)
+			recordGcRunTime(startTime, @metrics)
 			if err?
 				throw err
 
