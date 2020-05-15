@@ -19,6 +19,7 @@
     "docker-progress": "^4.0.1",
     "dockerode": "^2.5.3",
     "event-stream": "^3.3.2",
+    "eventemitter3": "^4.0.4",
     "lodash": "^4.17.5",
     "mz": "^2.6.0"
   },
