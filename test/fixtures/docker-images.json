@@ -1,7 +1,7 @@
 [
     {
-        "Id": "80dc79d29cd8618e678da508fc32f7289e6f72defb534f3f287731b1f8b355ea",
-        "ParentId": "6d41a4a0bf8168363e29da8a5ecbf3cd6c37e3f5a043decd5e7da6e427ba869c",
+        "Id": "sha256:80dc79d29cd8618e678da508fc32f7289e6f72defb534f3f287731b1f8b355ea",
+        "ParentId": "sha256:6d41a4a0bf8168363e29da8a5ecbf3cd6c37e3f5a043decd5e7da6e427ba869c",
         "RepoTags": [
             "<none>:<none>"
         ],
@@ -14,8 +14,8 @@
         "Labels": {}
     },
     {
-        "Id": "6d41a4a0bf8168363e29da8a5ecbf3cd6c37e3f5a043decd5e7da6e427ba869c",
-        "ParentId": "e53bd4df04f86919156c4510cdc6e6c9491ec8ec226381d36aca573b46bbbbbc",
+        "Id": "sha256:6d41a4a0bf8168363e29da8a5ecbf3cd6c37e3f5a043decd5e7da6e427ba869c",
+        "ParentId": "sha256:e53bd4df04f86919156c4510cdc6e6c9491ec8ec226381d36aca573b46bbbbbc",
         "RepoTags": [
             "project2"
         ],
@@ -28,8 +28,8 @@
         "Labels": {}
     },
     {
-        "Id": "e53bd4df04f86919156c4510cdc6e6c9491ec8ec226381d36aca573b46bbbbbc",
-        "ParentId": "6d15899cef812e2876b9d5d43d4cd863eda7b278f7b52d00975f6a9a8e817c74",
+        "Id": "sha256:e53bd4df04f86919156c4510cdc6e6c9491ec8ec226381d36aca573b46bbbbbc",
+        "ParentId": "sha256:6d15899cef812e2876b9d5d43d4cd863eda7b278f7b52d00975f6a9a8e817c74",
         "RepoTags": [
             "project1"
         ],
@@ -42,8 +42,8 @@
         "Labels": {}
     },
     {
-        "Id": "9a61b6b1315e6b457c31a03346ab94486a2f5397f4a82219bee01eead1c34c2e",
-        "ParentId": "902b87aaaec929e80541486828959f14fa061f529ad7f37ab300d4ef9f3a0dbf",
+        "Id": "sha256:9a61b6b1315e6b457c31a03346ab94486a2f5397f4a82219bee01eead1c34c2e",
+        "ParentId": "sha256:902b87aaaec929e80541486828959f14fa061f529ad7f37ab300d4ef9f3a0dbf",
         "RepoTags": [
             "resin/project3"
         ],
@@ -56,7 +56,7 @@
         "Labels": {}
     },
     {
-        "Id": "6d15899cef812e2876b9d5d43d4cd863eda7b278f7b52d00975f6a9a8e817c74",
+        "Id": "sha256:6d15899cef812e2876b9d5d43d4cd863eda7b278f7b52d00975f6a9a8e817c74",
         "ParentId": "",
         "RepoTags": [
             "<none>:<none>"
@@ -70,7 +70,7 @@
         "Labels": null
     },
     {
-        "Id": "902b87aaaec929e80541486828959f14fa061f529ad7f37ab300d4ef9f3a0dbf",
+        "Id": "sha256:902b87aaaec929e80541486828959f14fa061f529ad7f37ab300d4ef9f3a0dbf",
         "ParentId": "",
         "RepoTags": [
             "<none>:<none>"
@@ -84,7 +84,7 @@
         "Labels": null
     },
     {
-        "Id": "5b0d59026729b68570d99bc4f3f7c31a2e4f2a5736435641565d93e7c25bd2c3",
+        "Id": "sha256:5b0d59026729b68570d99bc4f3f7c31a2e4f2a5736435641565d93e7c25bd2c3",
         "ParentId": "",
         "RepoTags": [
             "busybox:latest"
