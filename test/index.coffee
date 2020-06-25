@@ -155,6 +155,34 @@ describe 'Garbage collection', ->
 		.then (imagesFound) ->
 			expect(imagesFound).to.deep.equal([false, false, true])
 
+
+	it 'should not consider images in use', ->
+		this.timeout(600000)
+		containerName = 'dont-consider-images-in-use-test'
+		return Promise.resolve() if SKIP_GC_TEST
+
+		docker = @docker
+
+		pullAsync(docker, IMAGES[0])
+		.then ->
+			docker.createContainer({
+				Image: IMAGES[0],
+				Tty: true,
+				Cmd: ['sh', '-c', 'while true; do echo test; sleep 1; done'],
+				name: containerName,
+				HostConfig: { AutoRemove: true }
+			})
+		.then (container) ->
+			container.start()
+		.then =>
+			@dockerStorage.garbageCollect(1)
+		.then ->
+			promiseToBool(docker.getImage(IMAGES[0]).inspect())
+		.then (imageInspect) ->
+			expect(imageInspect).to.be.true
+		.finally ->
+			docker.getContainer(containerName).stop()
+
 	it 'should get daemon host disk usage', ->
 		this.timeout(600000)
 		@dockerStorage.getDaemonFreeSpace()

@@ -25,10 +25,6 @@ exports.createTree = createTree = (images, containers, layer_mtimes) ->
 	usedImageIds = new Set(
 		_(containers)
 		.map('ImageID')
-		.map (imageId) ->
-			if imageId.startsWith('sha256:')
-				imageId = imageId.slice(7)
-			return imageId
 	)
 	tree = {}
 	root = '0000000000000000000000000000000000000000000000000000000000000000'
