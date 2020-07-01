@@ -64,6 +64,10 @@ class DockerGC
 
 	constructor: ->
 		@metrics = new EventEmitter()
+		@host = 'unknown'
+
+	setHostname: (hostname) ->
+		@host = hostname
 
 	setDocker: (hostObj) ->
 		@currentMtimes = {}
@@ -96,7 +100,7 @@ class DockerGC
 	tryRemoveImageBy: (image, attributes, removalType) =>
 		if attributes? and attributes.length > 0
 			Promise.each attributes, (attribute) =>
-				console.log("GC: Removing image : #{attribute} (id: #{image.id})")
+				console.log("[GC (#{@host}] Removing image : #{attribute} (id: #{image.id})")
 				@docker.getImage(attribute).remove(noprune: true)
 				.then =>
 					@metrics.emit('imageRemoved', removalType)
@@ -112,7 +116,7 @@ class DockerGC
 			@removeImage(image)
 			.catch (e) =>
 				@metrics.emit('imageRemovalError', e.statusCode)
-				console.log('GC: Failed to remove image: ', image)
+				console.log("[GC #{@host}]: Failed to remove image: ", image)
 				console.log(e)
 				if attemptAll
 					err ?= e
