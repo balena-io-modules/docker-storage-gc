@@ -16,7 +16,7 @@
     "@balena/node-metrics-gatherer": "^5.6.0",
     "JSONStream": "^1.0.7",
     "bluebird": "^3.7.2",
-    "docker-progress": "^4.0.1",
+    "docker-progress": "^5.0.0",
     "dockerode": "^2.5.3",
     "event-stream": "^3.3.2",
     "eventemitter3": "^4.0.4",

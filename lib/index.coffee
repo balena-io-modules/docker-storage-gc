@@ -3,6 +3,7 @@ _ = require 'lodash'
 { EventEmitter } = require 'eventemitter3'
 
 { DockerProgress } = require 'docker-progress'
+Docker = require 'dockerode'
 
 { dockerMtimeStream } = require './docker-event-stream'
 { dockerImageTree } = require './docker-image-tree'
@@ -72,7 +73,7 @@ class DockerGC
 	setDocker: (hostObj) ->
 		@currentMtimes = {}
 		@hostObj = _.defaults({ Promise }, hostObj)
-		@dockerProgress = new DockerProgress(@hostObj)
+		@dockerProgress = new DockerProgress({ docker: new Docker(@hostObj) })
 		dockerUtils.getDocker(@hostObj)
 		.then (@docker) =>
 			# Docker info can take a while so do it here,
