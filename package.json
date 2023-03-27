@@ -2,6 +2,7 @@
   "name": "docker-storage-gc",
   "version": "3.5.2",
   "main": "build/index.js",
+  "types": "index.d.ts",
   "scripts": {
     "lint": "resin-lint lib test tools",
     "pretest": "npm run lint",
@@ -14,12 +15,13 @@
   "description": "Automatically cleanup unused images based on various cache replacement algorithms",
   "dependencies": {
     "@balena/node-metrics-gatherer": "^5.6.0",
-    "JSONStream": "^1.0.7",
+    "@types/dockerode": "^2.5.34",
     "bluebird": "^3.7.2",
     "docker-progress": "^5.0.0",
     "dockerode": "^2.5.3",
     "event-stream": "^3.3.2",
     "eventemitter3": "^4.0.4",
+    "JSONStream": "^1.0.7",
     "lodash": "^4.17.5",
     "mz": "^2.6.0"
   },
