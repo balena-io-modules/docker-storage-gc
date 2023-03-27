@@ -1,0 +1,636 @@
+- commits:
+    - subject: Replace balenaCI with flowzone
+      hash: 1f5029fed1b1d7713665274949f2c8badb6d4f0f
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 3.5.2
+  title: ""
+  date: 2023-03-27T16:32:29.520Z
+- version: 3.5.1
+  date: 2021-06-25T14:19:00Z
+  commits:
+    - hash: 429eb83cfa378657928925b3946ea8c564c12678
+      author: Paulo Castro
+      footers:
+        change-type: patch
+      subject: Added package-lock=false to .npmrc (libs should not use package-lock)
+      body: null
+    - hash: 0f637203bb3841fa56b59bdaa336103c5b621037
+      author: Paulo Castro
+      footers:
+        change-type: patch
+      subject: Add .resinci.yml (don't run tests that will fail anyway)
+      body: null
+    - hash: 2228ede8404f92be344435f075ac4816c4d2daa6
+      author: Paulo Castro
+      footers:
+        change-type: patch
+      subject: Update dependencies (docker-progress)
+      body: Update docker-progress from 4.0.1 to 5.0.0
+- version: 3.5.0
+- date: 2020-07-01T15:46:00Z
+- commits:
+    - hash: 46068c4674e065ce6e4a9e6aace91ba2f060032a
+- commits:
+    - author: Tomás Tormo
+- commits:
+    - footers:
+        change-type: minor
+- commits:
+    - footers:
+        signed-off-by: Tomás Tormo <tomast@balena.io>
+- commits:
+    - subject: Improve image removal logging
+- commits:
+    - body: null
+- version: 3.4.0
+- date: 2020-06-25T16:52:32Z
+- commits:
+    - hash: ccd9cab74f400a665c0cf7905f928bb935c39a70
+- commits:
+    - author: Tomás Tormo
+- commits:
+    - footers:
+        change-type: minor
+- commits:
+    - footers:
+        signed-off-by: Tomás Tormo <tomast@balena.io>
+- commits:
+    - subject: Don't consider images in use
+- commits:
+    - body: null
+- version: 3.3.2
+- date: 2020-05-15T15:11:04Z
+- commits:
+    - hash: 0dc8c27e47ef931e515afe26beed6cd6236a08a7
+- commits:
+    - author: Tomás Tormo
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        signed-off-by: Tomás Tormo <tomast@balena.io>
+- commits:
+    - subject: Emit removal metrics
+- commits:
+    - body: null
+- commits:
+    - hash: 7884f8ace324ac52a9ac9fc29105500dae2080e8
+- commits:
+    - author: Tomás Tormo
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        signed-off-by: Tomás Tormo <tomast@balena.io>
+- commits:
+    - subject: Emit image removal metrics
+- commits:
+    - body: null
+- version: 3.3.1
+- date: 2020-05-15T07:29:10Z
+- commits:
+    - hash: 827e4b87980507b85af6aeae3dbc41ba5ad1e6e0
+- commits:
+    - author: Tomás Tormo
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        signed-off-by: Tomás Tormo <tomast@balena.io>
+- commits:
+    - subject: Emit image removal metrics
+- commits:
+    - body: null
+- version: 3.3.0
+- date: 2020-05-14T09:35:22Z
+- commits:
+    - hash: 9b3785f9f294362de24048335b08ae6dac407a51
+- commits:
+    - author: Tomás Tormo
+- commits:
+    - footers:
+        change-type: minor
+- commits:
+    - footers:
+        signed-off-by: Tomás Tormo <tomast@balena.io>
+- commits:
+    - subject: Add image removal metrics
+- commits:
+    - body: null
+- version: 3.2.0
+- date: 2020-05-01T12:56:32Z
+- commits:
+    - hash: 1674373b4d68410ed1a8c322ca3cf9e754891523
+- commits:
+    - author: Tomás Tormo
+- commits:
+    - footers:
+        change-type: minor
+- commits:
+    - footers:
+        signed-off-by: Tomás Tormo <tomast@balena.io>
+- commits:
+    - subject: Enable removing images by digest
+- commits:
+    - body: null
+- version: 3.1.1
+- date: 2020-03-20T17:50:47Z
+- commits:
+    - hash: a9a534cdfeb59156774bfb823b2afb55002897f7
+- commits:
+    - author: Pagan Gazzard
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - subject: Fix checking if an image has repoTags
+- commits:
+    - body: null
+- version: 3.1.0
+- date: 2020-03-20T17:20:07Z
+- commits:
+    - hash: 40fe8d3c15e6679385989de777c2405dc343322e
+- commits:
+    - author: Pagan Gazzard
+- commits:
+    - footers:
+        change-type: minor
+- commits:
+    - subject: Add option to attempt all garbage collection before throwing an error
+- commits:
+    - body: null
+- version: 3.0.1
+- date: 2020-03-20T14:09:45Z
+- commits:
+    - hash: 30c13f74fe41e7aa9ff8ffe28c7f82f2284e2d4b
+- commits:
+    - author: Pagan Gazzard
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - subject: Fix setting default mtimes for existing images at startup
+- commits:
+    - body: null
+- version: 3.0.0
+- date: 2020-03-17T15:48:23Z
+- commits:
+    - hash: 2162c7defd3dfb7a2e60fe5ad52e2be4a7fe8f3e
+- commits:
+    - author: Pagan Gazzard
+- commits:
+    - footers:
+        change-type: major
+- commits:
+    - subject: Default existing images to an mtime of 0 when setting up mtime stream
+- commits:
+    - body: null
+- version: 2.3.1
+- date: 2020-03-17T14:56:58Z
+- commits:
+    - hash: 73716a293770e824125b6c075cb7a02b13705ce6
+- commits:
+    - author: Pagan Gazzard
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - subject: Add linting
+- commits:
+    - body: null
+- commits:
+    - hash: 09f51af96d49c73d5312a0167276cc72eaecaa78
+- commits:
+    - author: Pagan Gazzard
+- commits:
+    - subject: "CI: Switch to node 8 for tests"
+- commits:
+    - body: null
+- version: 2.3.0
+- date: 2020-03-17T14:10:46Z
+- commits:
+    - hash: 1d3fb063d867d8aedb5de36331b495d3947600ee
+- commits:
+    - author: Pagan Gazzard
+- commits:
+    - footers:
+        change-type: minor
+- commits:
+    - subject: Publish compiled javascript rather than relying on runtime compilation
+- commits:
+    - body: null
+- version: 2.2.0
+- date: 2019-10-02T19:15:15Z
+- commits:
+    - hash: 4ae8b3ee37a8e923f2ba918531731ee711ceb1ef
+- commits:
+    - author: Pagan Gazzard
+- commits:
+    - footers:
+        change-type: minor
+- commits:
+    - subject: Update docker-progress
+- commits:
+    - body: null
+- version: 2.1.1
+- date: 2018-04-18T11:51:59Z
+- commits:
+    - hash: f3a2d5055312001b82e950dec625c56661e20712
+- commits:
+    - author: Alexis Svinartchouk
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - subject: "Add follow: true to container.logs call"
+- commits:
+    - body: >-
+        This makes it return a stream (which was the default behaviour before
+
+        https://github.com/apocas/dockerode/commit/d9727f736e13ce33228a6ddb920e911bc1a9ee2a
+
+        Connects-To: #21
+- version: 2.1.0
+- date: 2018-02-23T18:16:28Z
+- commits:
+    - hash: 5a446b5926a891f9c011d5138f42f49dede04b95
+- commits:
+    - author: Alexis Svinartchouk
+- commits:
+    - footers:
+        change-type: minor
+- commits:
+    - subject: Remove images by their repoTags if they have some.
+- commits:
+    - body: "Connects-To: #19"
+- version: 2.0.0
+- date: 2018-02-23T16:09:10Z
+- commits:
+    - hash: 59b931ee85e9160676d9da0301e98cac198e4010
+- commits:
+    - author: Alexis Svinartchouk
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - subject: Update lodash
+- commits:
+    - body: "Connects-To: #17"
+- commits:
+    - hash: ea0dddbd973409287bb6d8f4e1b4f5eeba9d625e
+- commits:
+    - author: Alexis Svinartchouk
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - subject: Factorize GC tests, pull images sequentially
+- commits:
+    - body: "Connects-To: #17"
+- commits:
+    - hash: d0140e2da52e14afc82d7643e7e2295930a6a21c
+- commits:
+    - author: Alexis Svinartchouk
+- commits:
+    - footers:
+        change-type: major
+- commits:
+    - subject: Match images with events by image ids and tags
+- commits:
+    - body: |-
+        * dockerImageTree now has a second parameter: mtimes
+        * annotateTree is removed
+        * createTree always returns annotated trees
+        Connects-To: #17
+- commits:
+    - hash: 80b058e8da34cb32057dc4a3e44e61ce2c99a54b
+- commits:
+    - author: Alexis Svinartchouk
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - subject: Remove the container we create to run `df`
+- commits:
+    - body: "Connects-To: #17"
+- commits:
+    - hash: d2a9606afb0380bcd08b22f00e45f18b91b12ae5
+- commits:
+    - author: Alexis Svinartchouk
+- commits:
+    - footers:
+        change-type: major
+- commits:
+    - subject: Change garbageCollect logic
+- commits:
+    - body: |-
+        The list of images to delete is created by:
+        * getting all the leafs of the images tree
+        * excluding the images being used by a container
+        * sorting leafs by mtime asc and size desc
+        * removing the first leaf image
+        * repeat until the desired space is reclaimed
+        garbageCollect changes:
+        * no longer returns a boolean
+        * throws an exception on the first image it can't remove
+        The caller will need to restart garbageCollect if it throws (some images
+        may have been added or deleted and the image tree needs to be fetched
+        again).
+        Connects-To: #17
+- commits:
+    - hash: 1827e54f5d5f28843143e710305ff519c690f4f7
+- commits:
+    - author: Alexis Svinartchouk
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - subject: Use nanoseconds
+- commits:
+    - body: "Connects-To: #17"
+- version: 1.2.0
+- date: 2017-11-03T20:27:42Z
+- commits:
+    - hash: 225363b4a25895ec6a63b43e8f4a34ca81028222
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: minor
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Probe for remote host architecture and use specific base image
+- commits:
+    - body: null
+- version: 1.1.3
+- date: 2017-11-03T17:33:14Z
+- commits:
+    - hash: df957e8cc9f6d4d9eaadff77ad044bd29617c445
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        connects-to: "#13"
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Use docker-progress to pull requisite images
+- commits:
+    - body: |-
+        The current method of pulling images did not always work in a production
+        setting, meaning that remote docker hosts could not be probed for free
+        space. This commit switches that method with docker-progress which is a
+        lot more reliable than the old method.
+- commits:
+    - hash: e54924a2fb84ec96775d762b82c439d97fd44367
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        connects-to: "#13"
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Don't version alpine image to ensure arch-specific image can be pulled
+- commits:
+    - body: null
+- version: 1.1.2
+- date: 2017-10-31T11:29:10Z
+- commits:
+    - hash: 82533f342ac6b7897cd8ed0736ab64bef18eaf5c
+- commits:
+    - author: Alexis Svinartchouk
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - subject: Use Bluebird as Promise for created Dockerode objects.
+- commits:
+    - body: "Connects-To: #11"
+- version: 1.1.1
+- date: 2017-10-26T13:24:20Z
+- commits:
+    - hash: f5dd31c0ee3a0b6cd1599b23af825a666b6b449c
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Report size in bytes, and fix total space reporting
+- commits:
+    - body: null
+- version: 1.1.0
+- date: 2017-10-26T12:24:17Z
+- commits:
+    - hash: 1f89990ea3cb02ea827f7d2fe4f23e61983696a6
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: minor
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Add a disk usage method which will work on remote hosts
+- commits:
+    - body: |-
+        It works by running a command on the alpine image, which checks
+        the free space on the `/` filesystem.
+- version: 1.0.0
+- date: 2017-10-26T10:04:00Z
+- commits:
+    - hash: 0eaa799c278fffcb728863e44bbc4e4979b4f2fc
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: major
+- commits:
+    - footers:
+        connects-to: "#7"
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Export garbage collection as a class to allow multiple instances
+- commits:
+    - body: |-
+        This means that the garbage collector can be used with several docker
+        daemons in parallel, without worrying about interaction between the two.
+- version: 0.1.0
+- date: 2017-07-26T11:49:20Z
+- commits:
+    - hash: a0aeccea1f717852337aa4938c622c94c9b1f76a
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Expose garbageCollect function to callers
+- commits:
+    - body: null
+- commits:
+    - hash: 932c639287dcf462530894c764a34360e87e1859
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Report when image failed to be removed
+- commits:
+    - body: null
+- commits:
+    - hash: 1471ed738614d4bff4d0db5f1e161656c534fef1
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Fix bug where undefined error would occur if no images were present
+- commits:
+    - body: |-
+        The tree was undefined in the case where there was no images, this
+        commit fixes that.
+- commits:
+    - hash: ccd3736d2553fcf28dfc0df3ea44d1136fc0ef7e
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Add garbageCollect tests
+- commits:
+    - body: |-
+        * Also add docker-progress as devDependency
+        * Also add circle.yml file
+- commits:
+    - hash: ec06eab570732d29caf43215581e8f7ec88d4b71
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Use dockerode's inbuilt promise interface
+- commits:
+    - body: Also propagate CircleCI connection info
+- commits:
+    - hash: 635d8693bc5fe55298c2ac9e3fba447143abedae
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: minor
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Switch to v2 of circleCI
+- commits:
+    - body: null
+- commits:
+    - hash: 12d8833a4cc892f2d6be2b0f68b5c2bfb75ffd21
+- commits:
+    - author: Cameron Diver
+- commits:
+    - subject: v0.1.0
+- commits:
+    - body: null
+- version: 0.0.2
+- date: 2017-07-13T20:38:56Z
+- commits:
+    - hash: ac91be58cbcab53ea533fa18608ee63055d3b610
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Minor bugfixes for initial release
+- commits:
+    - body: |-
+        * Fix typo in garbageCollect function
+        * Also add undefined check to saneRepoTags
+        * Also fixed incorrect usage of `docker` module
+- version: 0.0.1
+- date: 2017-07-12T14:54:29Z
+- commits:
+    - hash: 271c7048753f8636018b5036ec5b55795c3fda02
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        signed-off-by: Cameron Diver <cameron@resin.io>
+- commits:
+    - subject: Add CHANGELOG for versionbot integration
+- commits:
+    - body: null
+- commits:
+    - hash: c543b6ecf4133934fd1f79d04a9b22009d0ca865
+- commits:
+    - author: Cameron Diver
+- commits:
+    - footers:
+        change-type: patch
+- commits:
+    - subject: Implement garbageCollect function and fix typos
+- commits:
+    - body: |-
+        The garbageCollect function now, given a list of candidate images,
+        selects and removes the LRU images to regain the desired amount of
+        space. Fix typos in function calls.
+- commits:
+    - hash: 54a31ae8fd32bd1b9b9241e3a1a0bddc3f5bcaf4
+- commits:
+    - author: Petros Angelatos
+- commits:
+    - footers:
+        signed-off-by: Petros Angelatos <petrosagg@gmail.com>
+- commits:
+    - subject: move docker initialisation in its own module
+- commits:
+    - body: null

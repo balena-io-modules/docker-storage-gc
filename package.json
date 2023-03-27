@@ -1,6 +1,6 @@
 {
   "name": "docker-storage-gc",
-  "version": "3.5.1",
+  "version": "3.5.2",
   "main": "build/index.js",
   "scripts": {
     "lint": "resin-lint lib test tools",
@@ -29,5 +29,8 @@
     "mocha": "^2.3.4",
     "resin-lint": "^3.3.1",
     "timekeeper": "0.0.5"
+  },
+  "versionist": {
+    "publishedAt": "2023-03-27T16:32:29.665Z"
   }
 }
