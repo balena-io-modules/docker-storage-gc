@@ -1,4 +1,15 @@
 - commits:
+    - subject: Add typings
+      hash: 15a645990da1f763088a843c9a8876b4b5cddff8
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 3.5.3
+  title: ""
+  date: 2023-03-27T16:36:50.392Z
+- commits:
     - subject: Replace balenaCI with flowzone
       hash: 1f5029fed1b1d7713665274949f2c8badb6d4f0f
       body: ""
