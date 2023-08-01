@@ -37,7 +37,9 @@ exports.createTree = createTree = (images, containers, layer_mtimes) ->
 		node.repoTags = saneRepoAttrs(image.RepoTags)
 		node.repoDigests = saneRepoAttrs(image.RepoDigests)
 		node.size = image.Size
-		node.mtime = getMtime(node, layer_mtimes) or now
+		# If we haven't seen the image at all then assume it is brand new and default it's
+		# mtime to `now` to avoid removing it
+		node.mtime = getMtime(node, layer_mtimes) ? now
 		node.isUsedByAContainer = usedImageIds.has(image.Id)
 		parent.children[image.Id] = node
 

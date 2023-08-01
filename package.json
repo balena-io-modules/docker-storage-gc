@@ -5,9 +5,9 @@
   "types": "index.d.ts",
   "scripts": {
     "lint": "resin-lint lib test tools",
-    "pretest": "npm run lint",
+    "pretest": "npm run lint && docker rm -vf docker-storage-gc-tests && docker run --privileged --name docker-storage-gc-tests -v /tmp/dind:/var/run/ -d docker:24.0.5-dind && sleep 5 && docker exec docker-storage-gc-tests chown $(id -u) /var/run/docker.sock",
     "test": "mocha --compilers coffee:coffee-script/register test",
-    "test:local": "LOCAL_TESTS=true npm test",
+    "posttest": "docker rm -vf docker-storage-gc-tests",
     "prepare": "coffee -o build -c lib"
   },
   "author": "",
