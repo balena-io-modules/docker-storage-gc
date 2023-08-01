@@ -1,6 +1,6 @@
 {
   "name": "docker-storage-gc",
-  "version": "3.5.3",
+  "version": "3.5.4",
   "main": "build/index.js",
   "types": "index.d.ts",
   "scripts": {
@@ -33,6 +33,6 @@
     "timekeeper": "0.0.5"
   },
   "versionist": {
-    "publishedAt": "2023-03-27T16:36:50.558Z"
+    "publishedAt": "2023-08-01T13:43:27.378Z"
   }
 }
