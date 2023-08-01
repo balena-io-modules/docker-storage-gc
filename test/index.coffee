@@ -57,7 +57,7 @@ describe 'Garbage collection', ->
 		.then ->
 			dockerStorage.garbageCollect(1)
 		.then ->
-			promiseToBool(docker.getImage(NONE_TAG_IMAGES[0]).inspect())
+			promiseToBool(docker.getImage(IMAGES[0]).inspect())
 		.then (image_found) ->
 			expect(image_found).to.be.false
 
@@ -68,7 +68,7 @@ describe 'Garbage collection', ->
 
 		pullAsync(docker, NONE_TAG_IMAGES[0])
 		.then ->
-			docker.getImage(NONE_TAG_IMAGES[0])	.inspect()
+			docker.getImage(NONE_TAG_IMAGES[0]).inspect()
 		.then ->
 			dockerStorage.garbageCollect(1)
 		.then ->
@@ -84,7 +84,7 @@ describe 'Garbage collection', ->
 		Promise.each NONE_TAG_IMAGES, (image) ->
 			pullAsync(docker, image)
 		.then ->
-			docker.getImage(NONE_TAG_IMAGES[0])	.inspect()
+			docker.getImage(NONE_TAG_IMAGES[0]).inspect()
 		.then ->
 			dockerStorage.garbageCollect(1)
 		.then ->
