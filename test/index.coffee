@@ -32,8 +32,14 @@ describe 'Garbage collection', ->
 		@dockerStorage = new DockerGC()
 		# Use either local or CI docker
 		Promise.join(
-			dockerUtils.getDocker({})
-			@dockerStorage.setDocker({})
+			dockerUtils.getDocker({
+				socketPath: '/tmp/dind/docker.sock',
+				Promise,
+			})
+			@dockerStorage.setDocker({
+				socketPath: '/tmp/dind/docker.sock',
+				Promise,
+			})
 			(docker) =>
 				@dockerStorage.setupMtimeStream()
 				@docker = docker

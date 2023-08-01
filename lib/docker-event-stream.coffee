@@ -17,12 +17,8 @@ exports.parseEventStream = parseEventStream = (docker) ->
 		# If we've never seen the layer used then it's likely created before we started
 		# listening and so set the last used time to 0 as we know it should be older than
 		# anything we've seen
-		#
-		# Disable this behaviour for local testing, otherwise the GC will try to remove already
-		# existing images and the tests will break
-		if ! process.env.LOCAL_TESTS
-			for image in images
-				layer_mtimes[image.Id] = 0
+		for image in images
+			layer_mtimes[image.Id] = 0
 
 		return es.pipeline(
 			JSONStream.parse()
