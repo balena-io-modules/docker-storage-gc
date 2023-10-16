@@ -1,4 +1,14 @@
 - commits:
+    - subject: add support for arm32 architecture
+      hash: d308f7ad8e13c0d34960328c58e18715acb70aaf
+      body: ""
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+  version: 3.5.5
+  title: ""
+  date: 2023-10-16T18:55:08.049Z
+- commits:
     - subject: Run tests using dind to avoid interactions with existing images
       hash: ee161f87df98729d935c47c7c2a9f20d72a39e46
       body: ""
