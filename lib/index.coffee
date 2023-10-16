@@ -81,6 +81,7 @@ class DockerGC
 			@baseImagePromise = @getDaemonArchitecture()
 			.then (arch) ->
 				return switch arch
+					when 'arm' then 'arm32v6/alpine:3.6'
 					when 'arm64' then 'arm64v8/alpine:3.6'
 					when 'amd64' then 'alpine:3.6'
 					else
