@@ -1,4 +1,4 @@
-Promise = require 'bluebird'
+Bluebird = require 'bluebird'
 _ = require 'lodash'
 { EventEmitter } = require 'eventemitter3'
 
@@ -47,7 +47,7 @@ getImagesToRemove = (tree, reclaimSpace, metrics) ->
 	return result
 
 streamToString = (stream) ->
-	new Promise (resolve, reject) ->
+	new Bluebird (resolve, reject) ->
 		chunks = []
 		stream
 		.on('error', reject)
@@ -72,7 +72,7 @@ class DockerGC
 
 	setDocker: (hostObj) ->
 		@currentMtimes = {}
-		@hostObj = _.defaults({ Promise }, hostObj)
+		@hostObj = _.defaults({ Promise: Bluebird }, hostObj)
 		@dockerProgress = new DockerProgress({ docker: new Docker(@hostObj) })
 		dockerUtils.getDocker(@hostObj)
 		.then (@docker) =>
@@ -101,7 +101,7 @@ class DockerGC
 
 	tryRemoveImageBy: (image, attributes, removalType) =>
 		if attributes? and attributes.length > 0
-			Promise.each attributes, (attribute) =>
+			Bluebird.each attributes, (attribute) =>
 				console.log("[GC (#{@host}] Removing image : #{attribute} (id: #{image.id})")
 				@docker.getImage(attribute).remove(noprune: true)
 				.then =>
@@ -131,7 +131,7 @@ class DockerGC
 				throw err
 
 	getOutput: (image, command) ->
-		Promise.using @runDisposer(image, command), (container) ->
+		Bluebird.using @runDisposer(image, command), (container) ->
 			container.logs(stdout: true, follow: true)
 			.then (logs) ->
 				streamToString(logs)

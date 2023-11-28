@@ -1,11 +1,11 @@
 Docker = require 'dockerode'
-Promise = require 'bluebird'
+Bluebird = require 'bluebird'
 _ = require 'lodash'
 
 getDockerConnectOpts = (hostObj) ->
 	if !_.isEmpty(hostObj)
-		return Promise.resolve(hostObj)
-	return Promise.resolve({ socketPath: '/var/run/docker.sock', Promise })
+		return Bluebird.resolve(hostObj)
+	return Bluebird.resolve({ socketPath: '/var/run/docker.sock', Promise: Bluebird })
 
 exports.getDocker = (hostObj) ->
 	getDockerConnectOpts(hostObj)

@@ -1,4 +1,4 @@
-Promise = require 'bluebird'
+Bluebird = require 'bluebird'
 { expect } = require 'chai'
 
 DockerGC = require('../lib/index')
@@ -31,14 +31,14 @@ describe 'Garbage collection', ->
 	beforeEach ->
 		@dockerStorage = new DockerGC()
 		# Use either local or CI docker
-		Promise.join(
+		Bluebird.join(
 			dockerUtils.getDocker({
 				socketPath: '/tmp/dind/docker.sock',
-				Promise,
+				Promise: Bluebird,
 			})
 			@dockerStorage.setDocker({
 				socketPath: '/tmp/dind/docker.sock',
-				Promise,
+				Promise: Bluebird,
 			})
 			(docker) =>
 				@dockerStorage.setupMtimeStream()
@@ -87,14 +87,14 @@ describe 'Garbage collection', ->
 		docker = @docker
 		dockerStorage = @dockerStorage
 
-		Promise.each NONE_TAG_IMAGES, (image) ->
+		Bluebird.each NONE_TAG_IMAGES, (image) ->
 			pullAsync(docker, image)
 		.then ->
 			docker.getImage(NONE_TAG_IMAGES[0]).inspect()
 		.then ->
 			dockerStorage.garbageCollect(1)
 		.then ->
-			Promise.map NONE_TAG_IMAGES, (image) ->
+			Bluebird.map NONE_TAG_IMAGES, (image) ->
 				promiseToBool(docker.getImage(image).inspect())
 		.then (imagesFound) ->
 			expect(imagesFound).to.deep.equal([false, false])
@@ -129,14 +129,14 @@ describe 'Garbage collection', ->
 		.then ->
 			docker.getImage(IMAGES[0]).tag(repo: 'some-repo', tag: 'some-tag')
 		.then ->
-			Promise.each IMAGES.slice(1), (image) ->
+			Bluebird.each IMAGES.slice(1), (image) ->
 				pullAsync(docker, image)
 		.then =>
 			# Attempt to remove a single byte, which will remove the LRU image,
 			# which should be alpine
 			@dockerStorage.garbageCollect(1)
 		.then ->
-			Promise.map IMAGES, (image) ->
+			Bluebird.map IMAGES, (image) ->
 				promiseToBool(docker.getImage(image).inspect())
 		.then (imagesFound) ->
 			expect(imagesFound).to.deep.equal([false, true, true])
@@ -147,7 +147,7 @@ describe 'Garbage collection', ->
 
 		docker = @docker
 
-		Promise.each IMAGES, (image) ->
+		Bluebird.each IMAGES, (image) ->
 			pullAsync(docker, image)
 		.then ->
 			# Get the size of the first image, so we can add one to it to remove
@@ -156,7 +156,7 @@ describe 'Garbage collection', ->
 		.then (size) =>
 			@dockerStorage.garbageCollect(size + 1)
 		.then ->
-			Promise.map IMAGES, (image) ->
+			Bluebird.map IMAGES, (image) ->
 				promiseToBool(docker.getImage(image).inspect())
 		.then (imagesFound) ->
 			expect(imagesFound).to.deep.equal([false, false, true])
