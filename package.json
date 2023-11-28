@@ -2,19 +2,24 @@
   "name": "docker-storage-gc",
   "version": "3.5.12",
   "main": "build/index.js",
-  "types": "index.d.ts",
   "scripts": {
-    "lint": "balena-lint lib test tools",
-    "pretest": "npm run lint && docker rm -vf docker-storage-gc-tests && docker run --privileged --name docker-storage-gc-tests -v /tmp/dind:/var/run/ -d docker:24.0.5-dind && sleep 5 && docker exec docker-storage-gc-tests chown $(id -u) /var/run/docker.sock",
-    "test": "mocha --exit --require coffeescript/register test/**/*.coffee",
-    "posttest": "docker rm -vf docker-storage-gc-tests",
-    "prepare": "coffee -o build -c lib"
+    "lint": "balena-lint --typescript -e ts -e js lib test tools",
+    "lint-fix": "balena-lint --typescript --fix -e ts -e js lib test tools",
+    "pretest": "npm run prepare && docker rm -vf docker-storage-gc-tests && docker run --privileged --name docker-storage-gc-tests -v /tmp/dind:/var/run/ -d docker:24.0.5-dind && sleep 5 && docker exec docker-storage-gc-tests chown $(id -u) /var/run/docker.sock",
+    "test": "mocha --exit test",
+    "posttest": "docker rm -vf docker-storage-gc-tests && npm run lint",
+    "prepare": "npx tsc"
   },
   "author": "",
   "license": "Apache 2.0",
   "description": "Automatically cleanup unused images based on various cache replacement algorithms",
   "dependencies": {
+    "@types/bluebird": "^3.5.42",
     "@types/dockerode": "^2.5.34",
+    "@types/event-stream": "^4.0.5",
+    "@types/JSONStream": "npm:@types/jsonstream@^0.8.31",
+    "@types/lodash": "^4.14.202",
+    "@types/node": "^16.18.65",
     "bluebird": "^3.7.2",
     "docker-progress": "^5.2.0",
     "dockerode": "^2.5.8",
@@ -24,11 +29,11 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@balena/lint": "^5.4.2",
+    "@balena/lint": "^6.2.2",
     "chai": "^4.3.10",
-    "coffeescript": "^1.12.7",
     "mocha": "^10.2.0",
-    "timekeeper": "^2.3.1"
+    "timekeeper": "^2.3.1",
+    "typescript": "^5.3.2"
   },
   "versionist": {
     "publishedAt": "2023-12-04T16:03:38.108Z"
