@@ -1,5 +1,5 @@
 _ = require 'lodash'
-Promise = require 'bluebird'
+Bluebird = require 'bluebird'
 
 saneRepoAttrs = (repoAttrs) ->
 	return [] if !repoAttrs?
@@ -48,7 +48,7 @@ exports.createTree = createTree = (images, containers, layer_mtimes) ->
 	return tree[root]
 
 exports.dockerImageTree = (docker, layer_mtimes) ->
-	Promise.join(
+	Bluebird.join(
 		docker.listImages(all: true)
 		docker.listContainers(all: true)
 		layer_mtimes

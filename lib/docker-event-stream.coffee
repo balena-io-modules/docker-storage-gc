@@ -1,4 +1,4 @@
-Promise = require 'bluebird'
+Bluebird = require 'bluebird'
 es = require 'event-stream'
 JSONStream = require 'JSONStream'
 
@@ -35,7 +35,7 @@ exports.parseEventStream = parseEventStream = (docker) ->
 	)
 
 exports.dockerMtimeStream = (docker) ->
-	Promise.join(
+	Bluebird.join(
 		docker.getEvents()
 		parseEventStream(docker)
 		(stream, streamParser) ->

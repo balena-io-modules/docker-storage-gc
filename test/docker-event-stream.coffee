@@ -1,4 +1,3 @@
-Promise = require 'bluebird'
 { expect } = require 'chai'
 fs = require 'fs'
 es = require 'event-stream'
