@@ -1,4 +1,15 @@
 - commits:
+    - subject: Remove unused `mz` dependency
+      hash: b39c411f82f69b7aa980364bce04e8b398a343da
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 3.5.6
+  title: ""
+  date: 2023-11-28T20:47:13.918Z
+- commits:
     - subject: add support for arm32 architecture
       hash: d308f7ad8e13c0d34960328c58e18715acb70aaf
       body: ""
