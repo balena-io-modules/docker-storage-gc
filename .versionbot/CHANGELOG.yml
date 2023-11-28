@@ -1,4 +1,15 @@
 - commits:
+    - subject: Import bluebird as `Bluebird` instead of `Promise`
+      hash: f97bfe4be10415ff3a74709d1c158eb847a280d1
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 3.5.7
+  title: ""
+  date: 2023-11-28T22:13:16.460Z
+- commits:
     - subject: Remove unused `mz` dependency
       hash: b39c411f82f69b7aa980364bce04e8b398a343da
       body: ""
