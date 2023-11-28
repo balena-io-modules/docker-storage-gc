@@ -22,8 +22,7 @@
     "event-stream": "^3.3.2",
     "eventemitter3": "^4.0.4",
     "JSONStream": "^1.0.7",
-    "lodash": "^4.17.5",
-    "mz": "^2.6.0"
+    "lodash": "^4.17.5"
   },
   "devDependencies": {
     "chai": "^3.4.1",
