@@ -1,5 +1,5 @@
-import type Dockerode = require('dockerode');
-import type EventEmitter = require('eventemitter3');
+import type * as Dockerode from 'dockerode';
+import type EventEmitter from 'eventemitter3';
 
 interface Events {
 	numberImagesToRemove(n: number): void;
