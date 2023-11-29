@@ -1,4 +1,15 @@
 - commits:
+    - subject: Update to eventemitter3 v5
+      hash: 6d40753d7643460e8736d8b5f0672d8dd9f84f4f
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 3.5.8
+  title: ""
+  date: 2023-11-29T14:46:22.453Z
+- commits:
     - subject: Import bluebird as `Bluebird` instead of `Promise`
       hash: f97bfe4be10415ff3a74709d1c158eb847a280d1
       body: ""
