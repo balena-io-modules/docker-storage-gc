@@ -1,4 +1,15 @@
 - commits:
+    - subject: Fix exported typings
+      hash: f3e088e5853025e80baaf58bbdc965074020a95f
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 3.5.9
+  title: ""
+  date: 2023-11-29T16:51:28.257Z
+- commits:
     - subject: Update to eventemitter3 v5
       hash: 6d40753d7643460e8736d8b5f0672d8dd9f84f4f
       body: ""
