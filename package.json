@@ -20,7 +20,7 @@
     "docker-progress": "^5.0.0",
     "dockerode": "^2.5.3",
     "event-stream": "^3.3.2",
-    "eventemitter3": "^4.0.4",
+    "eventemitter3": "^5.0.1",
     "JSONStream": "^1.0.7",
     "lodash": "^4.17.5"
   },
