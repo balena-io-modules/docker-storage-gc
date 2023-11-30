@@ -1,4 +1,15 @@
 - commits:
+    - subject: Optimize `getMtimeFrom`
+      hash: e898db2d4abf0ef7cf30311391339fcee40b2868
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 3.5.10
+  title: ""
+  date: 2023-11-30T21:51:49.391Z
+- commits:
     - subject: Fix exported typings
       hash: f3e088e5853025e80baaf58bbdc965074020a95f
       body: ""
