@@ -8,9 +8,9 @@ saneRepoAttrs = (repoAttrs) ->
 exports.createNode = createNode = (id) -> { id: id, size: 0, repoTags: [], repoDigests: [], mtime: null, children: {} }
 
 getMtimeFrom = (layer_mtimes, attributes) ->
-	key = _.head(_.intersection(_.keys(layer_mtimes), attributes))
-	if key?
-		return layer_mtimes[key]
+	for key in attributes
+		if layer_mtimes[key]?
+			return layer_mtimes[key]
 
 getMtime = (tree, layer_mtimes) ->
 	mtime = layer_mtimes[tree.id]
