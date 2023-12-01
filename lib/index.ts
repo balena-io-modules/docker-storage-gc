@@ -106,7 +106,6 @@ export default class DockerGC {
 		this.currentMtimes = {};
 		hostObj = _.defaults({ Promise: Bluebird }, hostObj);
 		this.dockerProgress = new DockerProgress({
-			// @ts-expect-error -- We're using dockerode 2 when DockerProgress expects 3
 			docker: new Docker(hostObj),
 		});
 		return getDocker(hostObj)
@@ -227,15 +226,16 @@ export default class DockerGC {
 		image: string,
 		command: string[],
 	): Disposer<Docker.Container> {
-		const containerPromise: Promise<Docker.Container> = this.docker.run(
-			image,
-			command,
-			// @ts-expect-error -- The typings expect an array of streams but in reality they're optional
-			undefined,
-		);
-		return Bluebird.resolve(containerPromise).disposer((container) =>
-			container.wait().then(() => container.remove()),
-		);
+		const containerPromise: Promise<[unknown, Docker.Container]> =
+			this.docker.run(
+				image,
+				command,
+				// @ts-expect-error -- The typings expect an array of streams but in reality they're optional
+				undefined,
+			);
+		return Bluebird.resolve(
+			containerPromise.then(([, container]) => container),
+		).disposer((container) => container.wait().then(() => container.remove()));
 	}
 
 	public getDaemonFreeSpace(): Promise<{
