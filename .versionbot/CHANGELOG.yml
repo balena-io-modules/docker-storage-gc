@@ -1,4 +1,22 @@
 - commits:
+    - subject: Update to dockerode 3.x
+      hash: c6b5416ef2026eba121414cbd349d0717a6d3a68
+      body: ""
+      footer:
+        Change-type: major
+        change-type: major
+      author: Pagan Gazzard
+    - subject: Convert to typescript
+      hash: cb4d9a210d5ab04c04757065c126c22ebe2f8f0c
+      body: ""
+      footer:
+        Change-type: major
+        change-type: major
+      author: Pagan Gazzard
+  version: 4.0.0
+  title: ""
+  date: 2023-12-04T17:45:37.011Z
+- commits:
     - subject: Update event-stream to 4.x
       hash: 5d60200c8c776fff5b93d3750df8603e64db3ebf
       body: ""
