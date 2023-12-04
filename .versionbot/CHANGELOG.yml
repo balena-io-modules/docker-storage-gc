@@ -1,4 +1,15 @@
 - commits:
+    - subject: Remove unused `@balena/node-metrics-gatherer` dependency
+      hash: a1ab3e61619839799a32b629d425c67360e5fb8b
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 3.5.11
+  title: ""
+  date: 2023-12-04T15:39:55.351Z
+- commits:
     - subject: Optimize `getMtimeFrom`
       hash: e898db2d4abf0ef7cf30311391339fcee40b2868
       body: ""
