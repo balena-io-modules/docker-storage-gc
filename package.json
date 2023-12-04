@@ -3,10 +3,10 @@
   "version": "3.5.12",
   "main": "build/index.js",
   "scripts": {
-    "lint": "balena-lint --typescript -e ts -e js lib test tools",
-    "lint-fix": "balena-lint --typescript --fix -e ts -e js lib test tools",
+    "lint": "balena-lint -t tsconfig.dev.json -e ts -e js lib test tools",
+    "lint-fix": "balena-lint --fix  -t tsconfig.dev.json -e ts -e js lib test tools",
     "pretest": "npm run prepare && docker rm -vf docker-storage-gc-tests && docker run --privileged --name docker-storage-gc-tests -v /tmp/dind:/var/run/ -d docker:24.0.5-dind && sleep 5 && docker exec docker-storage-gc-tests chown $(id -u) /var/run/docker.sock",
-    "test": "mocha --exit test",
+    "test": "mocha --exit --require ts-node/register/transpile-only test/**/*.ts",
     "posttest": "docker rm -vf docker-storage-gc-tests && npm run lint",
     "prepare": "npx tsc"
   },
@@ -29,10 +29,13 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@balena/lint": "^6.2.2",
+    "@balena/lint": "^7.2.4",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
     "chai": "^4.3.10",
     "mocha": "^10.2.0",
     "timekeeper": "^2.3.1",
+    "ts-node": "^10.9.1",
     "typescript": "^5.3.2"
   },
   "versionist": {

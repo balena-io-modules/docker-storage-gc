@@ -1,24 +1,24 @@
-const { expect } = require('chai');
-const fs = require('fs');
-const tk = require('timekeeper');
-const es = require('event-stream');
-const { parseEventStream } = require('../build/docker-event-stream');
-const { createTree } = require('../build/docker-image-tree');
-const dockerUtils = require('../build/docker');
+import type { ContainerInfo, ImageInfo } from 'dockerode';
+import { expect } from 'chai';
+import fs from 'fs';
+import tk from 'timekeeper';
+import es from 'event-stream';
+import { LayerMtimes, parseEventStream } from '../build/docker-event-stream';
+import { createTree } from '../build/docker-image-tree';
+import { getDocker } from '../build/docker';
 
 const getLayerMtimes = () =>
-	dockerUtils
-		.getDocker({})
+	getDocker({})
 		.then((docker) => parseEventStream(docker))
 		.then(
 			(streamParser) =>
-				new Promise(function (resolve, reject) {
-					let mtimes = null;
+				new Promise<LayerMtimes>(function (resolve, reject) {
+					let mtimes: LayerMtimes;
 					return fs
 						.createReadStream(__dirname + '/fixtures/docker-events.json')
 						.pipe(streamParser)
 						.on('error', reject)
-						.pipe(es.mapSync((data) => (mtimes = data)))
+						.pipe(es.mapSync((data: LayerMtimes) => (mtimes = data)))
 						.on('end', () => resolve(mtimes))
 						.on('error', reject);
 				}),
@@ -29,9 +29,17 @@ describe('createTree', function () {
 		// TODO
 	});
 
-	it('should return a tree of images', function () {
-		const images = require('./fixtures/docker-images.json');
-		const containers = require('./fixtures/docker-containers.json');
+	it('should return a tree of images', async function () {
+		const images = (
+			await import('./fixtures/docker-images.json', {
+				assert: { type: 'json' },
+			})
+		).default as ImageInfo[];
+		const containers = (
+			await import('./fixtures/docker-containers.json', {
+				assert: { type: 'json' },
+			})
+		).default as ContainerInfo[];
 		return getLayerMtimes().then(function (mtimes) {
 			tk.freeze(Date.UTC(2016, 0, 1));
 			const tree = createTree(images, containers, mtimes);
@@ -68,6 +76,7 @@ describe('createTree', function () {
 													size: 330389,
 													repoTags: ['project2'],
 													repoDigests: [],
+													// eslint-disable-next-line @typescript-eslint/no-loss-of-precision
 													mtime: 1448576073085559863,
 													isUsedByAContainer: false,
 													children: {

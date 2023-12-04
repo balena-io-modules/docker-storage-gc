@@ -1,8 +1,10 @@
-const { expect } = require('chai');
-const fs = require('fs');
-const es = require('event-stream');
-const { parseEventStream } = require('../build/docker-event-stream');
-const dockerUtils = require('../build/docker');
+import { LayerMtimes } from '../build/docker-event-stream';
+
+import { expect } from 'chai';
+import fs from 'fs';
+import es from 'event-stream';
+import { parseEventStream } from '../build/docker-event-stream';
+import { getDocker } from '../build/docker';
 
 describe('parseEventStream', function () {
 	it.skip('should work with empty stream', function () {
@@ -10,19 +12,18 @@ describe('parseEventStream', function () {
 	});
 
 	it('should return updated mtimes', () =>
-		dockerUtils
-			.getDocker({})
+		getDocker({})
 			.then((docker) => parseEventStream(docker))
 			.then(
 				(streamParser) =>
-					new Promise(function (resolve, reject) {
-						let mtimes = null;
+					new Promise<LayerMtimes>(function (resolve, reject) {
+						let mtimes: LayerMtimes;
 
 						return fs
 							.createReadStream(__dirname + '/fixtures/docker-events.json')
 							.pipe(streamParser)
 							.on('error', reject)
-							.pipe(es.mapSync((data) => (mtimes = data)))
+							.pipe(es.mapSync((data: LayerMtimes) => (mtimes = data)))
 							.on('end', () => resolve(mtimes))
 							.on('error', reject);
 					}),

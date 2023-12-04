@@ -1,7 +1,8 @@
-const Bluebird = require('bluebird');
-const { expect } = require('chai');
-const { default: DockerGC } = require('../build/index');
-const dockerUtils = require('../build/docker');
+import type Docker from 'dockerode';
+import Bluebird from 'bluebird';
+import { expect } from 'chai';
+import DockerGC from '../build/index';
+import { getDocker } from '../build/docker';
 
 const SKIP_GC_TEST = process.env.SKIP_GC_TEST === '1' || false;
 const IMAGES = ['alpine:3.1', 'debian:squeeze', 'ubuntu:lucid'];
@@ -13,9 +14,10 @@ const NONE_TAG_IMAGES = [
 	'balenaplayground/hello-world@sha256:90659bf80b44ce6be8234e6ff90a1ac34acbeb826903b02cfa0da11c82cbc042',
 ];
 
-const promiseToBool = (p) => p.return(true).catchReturn(false);
+const promiseToBool = (p: Promise<unknown>): Promise<boolean> =>
+	p.then(() => true).catch(() => false);
 
-const pullAsync = function (docker, tag) {
+const pullAsync = function (docker: Docker, tag: string) {
 	console.log(`[TEST] Pulling ${tag}`);
 	return docker.pull(tag).then(
 		(stream) =>
@@ -31,27 +33,26 @@ const pullAsync = function (docker, tag) {
 // the system to ensure that the correct one is being removed. Because of this, you
 // can use the SKIP_GC_TEST env var to inform the test suite not to run this test
 describe('Garbage collection', function () {
+	let dockerStorage: DockerGC;
+	let docker: Docker;
 	beforeEach(function () {
-		this.dockerStorage = new DockerGC();
+		dockerStorage = new DockerGC();
 		// Use either local or CI docker
 		return Bluebird.join(
-			dockerUtils.getDocker({
+			getDocker({
 				socketPath: '/tmp/dind/docker.sock',
-				Promise: Bluebird,
 			}),
-			this.dockerStorage.setDocker({
+			dockerStorage.setDocker({
 				socketPath: '/tmp/dind/docker.sock',
-				Promise: Bluebird,
 			}),
-			(docker) => {
-				this.docker = docker;
-				return this.dockerStorage.setupMtimeStream();
+			($docker) => {
+				docker = $docker;
+				return dockerStorage.setupMtimeStream();
 			},
 		);
 	});
 
 	afterEach(function () {
-		const { docker } = this;
 		console.log('[afterEach] Cleaning up...');
 		return IMAGES.concat(NONE_TAG_IMAGES).map((image) =>
 			docker
@@ -65,8 +66,6 @@ describe('Garbage collection', function () {
 
 	it('should remove a image by tag', function () {
 		this.timeout(600000);
-		const { docker } = this;
-		const { dockerStorage } = this;
 
 		return pullAsync(docker, IMAGES[0])
 			.then(() => docker.getImage(IMAGES[0]).inspect())
@@ -77,8 +76,6 @@ describe('Garbage collection', function () {
 
 	it('should remove a image by digest if its tag == none', function () {
 		this.timeout(600000);
-		const { docker } = this;
-		const { dockerStorage } = this;
 
 		return pullAsync(docker, NONE_TAG_IMAGES[0])
 			.then(() => docker.getImage(NONE_TAG_IMAGES[0]).inspect())
@@ -89,8 +86,6 @@ describe('Garbage collection', function () {
 
 	it('should remove a image with tag == none even if it is in several repos', function () {
 		this.timeout(600000);
-		const { docker } = this;
-		const { dockerStorage } = this;
 
 		return Bluebird.each(NONE_TAG_IMAGES, (image) => pullAsync(docker, image))
 			.then(() => docker.getImage(NONE_TAG_IMAGES[0]).inspect())
@@ -109,15 +104,13 @@ describe('Garbage collection', function () {
 			return Promise.resolve();
 		}
 
-		const { docker } = this;
-
 		// first pull some images, so we know in which order they are referenced
 		return pullAsync(docker, IMAGES[0])
 			.then(() =>
 				docker.getImage(IMAGES[0]).tag({ repo: 'some-repo', tag: 'some-tag' }),
 			)
 			.then(() => {
-				return this.dockerStorage.garbageCollect(1);
+				return dockerStorage.garbageCollect(1);
 			})
 			.then(() => promiseToBool(docker.getImage(IMAGES[0]).inspect()))
 			.then((imagesFound) => expect(imagesFound).to.be.false);
@@ -128,8 +121,6 @@ describe('Garbage collection', function () {
 		if (SKIP_GC_TEST) {
 			return Promise.resolve();
 		}
-
-		const { docker } = this;
 
 		// first pull some images, so we know in which order they are referenced
 		return pullAsync(docker, IMAGES[0])
@@ -142,7 +133,7 @@ describe('Garbage collection', function () {
 			.then(() => {
 				// Attempt to remove a single byte, which will remove the LRU image,
 				// which should be alpine
-				return this.dockerStorage.garbageCollect(1);
+				return dockerStorage.garbageCollect(1);
 			})
 			.then(() =>
 				Bluebird.map(IMAGES, (image) =>
@@ -160,16 +151,17 @@ describe('Garbage collection', function () {
 			return Promise.resolve();
 		}
 
-		const { docker } = this;
-
 		return Bluebird.each(IMAGES, (image) => pullAsync(docker, image))
 			.then(() =>
 				// Get the size of the first image, so we can add one to it to remove
 				// the next one in addition
-				docker.getImage(IMAGES[0]).inspect().get('Size'),
+				docker
+					.getImage(IMAGES[0])
+					.inspect()
+					.then((i) => i.Size),
 			)
 			.then((size) => {
-				return this.dockerStorage.garbageCollect(size + 1);
+				return dockerStorage.garbageCollect(size + 1);
 			})
 			.then(() =>
 				Bluebird.map(IMAGES, (image) =>
@@ -188,8 +180,6 @@ describe('Garbage collection', function () {
 			return Promise.resolve();
 		}
 
-		const { docker } = this;
-
 		return pullAsync(docker, IMAGES[0])
 			.then(() =>
 				docker.createContainer({
@@ -202,7 +192,7 @@ describe('Garbage collection', function () {
 			)
 			.then((container) => container.start())
 			.then(() => {
-				return this.dockerStorage.garbageCollect(1);
+				return dockerStorage.garbageCollect(1);
 			})
 			.then(() => promiseToBool(docker.getImage(IMAGES[0]).inspect()))
 			.then((imageInspect) => expect(imageInspect).to.be.true)
@@ -211,7 +201,7 @@ describe('Garbage collection', function () {
 
 	it('should get daemon host disk usage', function () {
 		this.timeout(600000);
-		return this.dockerStorage.getDaemonFreeSpace().then(function (du) {
+		return dockerStorage.getDaemonFreeSpace().then(function (du) {
 			expect(du).to.be.an('object');
 			expect(du).to.have.property('free').that.is.a('number');
 			expect(du).to.have.property('used').that.is.a('number');
@@ -220,13 +210,18 @@ describe('Garbage collection', function () {
 	});
 
 	it('should get the correct architecture for a remote host', function () {
-		return this.dockerStorage
-			.getDaemonArchitecture()
-			.then((arch) => expect(arch).to.be.a('string'));
+		return (
+			(
+				dockerStorage
+					// @ts-expect-error getDaemonArchitecture is private
+					.getDaemonArchitecture() as Promise<string>
+			).then((arch) => expect(arch).to.be.a('string'))
+		);
 	});
 
 	it('should set a base image to be used', function () {
-		return this.dockerStorage.baseImagePromise.then((img) =>
+		// @ts-expect-error baseImagePromise is private
+		return (dockerStorage.baseImagePromise as Promise<string>).then((img) =>
 			expect(img).to.be.a('string'),
 		);
 	});
