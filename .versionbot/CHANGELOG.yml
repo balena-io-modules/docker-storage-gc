@@ -1,4 +1,15 @@
 - commits:
+    - subject: Update event-stream to 4.x
+      hash: 5d60200c8c776fff5b93d3750df8603e64db3ebf
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 3.5.12
+  title: ""
+  date: 2023-12-04T16:03:37.996Z
+- commits:
     - subject: Remove unused `@balena/node-metrics-gatherer` dependency
       hash: a1ab3e61619839799a32b629d425c67360e5fb8b
       body: ""
