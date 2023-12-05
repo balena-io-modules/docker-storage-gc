@@ -104,7 +104,6 @@ export default class DockerGC {
 
 	public async setDocker(hostObj: Docker.DockerOptions): Promise<void> {
 		this.currentMtimes = {};
-		hostObj = _.defaults({ Promise: Bluebird }, hostObj);
 		this.dockerProgress = new DockerProgress({
 			docker: new Docker(hostObj),
 		});
