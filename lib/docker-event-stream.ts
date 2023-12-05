@@ -1,4 +1,3 @@
-import Bluebird from 'bluebird';
 import * as es from 'event-stream';
 import JSONStream from 'JSONStream';
 import type Docker from 'dockerode';
@@ -84,10 +83,8 @@ export const parseEventStream = (docker: Docker) =>
 	});
 
 export function dockerMtimeStream(docker: Docker) {
-	return Bluebird.join(
-		docker.getEvents(),
-		parseEventStream(docker),
-		(stream, streamParser) =>
+	return Promise.all([docker.getEvents(), parseEventStream(docker)]).then(
+		([stream, streamParser]) =>
 			es.pipeline(stream as any as es.MapStream, streamParser),
 	);
 }

@@ -188,7 +188,7 @@ export default class DockerGC {
 		let err: any;
 		const startTime = process.hrtime();
 		this.metrics.emit('spaceReclaimed', reclaimSpace);
-		return dockerImageTree(this.docker, this.currentMtimes)
+		return Bluebird.resolve(dockerImageTree(this.docker, this.currentMtimes))
 			.then((tree) => {
 				return getImagesToRemove(tree, reclaimSpace, this.metrics);
 			})

@@ -38,18 +38,17 @@ describe('Garbage collection', function () {
 	beforeEach(function () {
 		dockerStorage = new DockerGC();
 		// Use either local or CI docker
-		return Bluebird.join(
+		return Promise.all([
 			getDocker({
 				socketPath: '/tmp/dind/docker.sock',
 			}),
 			dockerStorage.setDocker({
 				socketPath: '/tmp/dind/docker.sock',
 			}),
-			($docker) => {
-				docker = $docker;
-				return dockerStorage.setupMtimeStream();
-			},
-		);
+		]).then(([$docker]) => {
+			docker = $docker;
+			return dockerStorage.setupMtimeStream();
+		});
 	});
 
 	afterEach(function () {
@@ -91,8 +90,10 @@ describe('Garbage collection', function () {
 			.then(() => docker.getImage(NONE_TAG_IMAGES[0]).inspect())
 			.then(() => dockerStorage.garbageCollect(1))
 			.then(() =>
-				Bluebird.map(NONE_TAG_IMAGES, (image) =>
-					promiseToBool(docker.getImage(image).inspect()),
+				Promise.all(
+					NONE_TAG_IMAGES.map((image) =>
+						promiseToBool(docker.getImage(image).inspect()),
+					),
 				),
 			)
 			.then((imagesFound) => expect(imagesFound).to.deep.equal([false, false]));
@@ -136,8 +137,10 @@ describe('Garbage collection', function () {
 				return dockerStorage.garbageCollect(1);
 			})
 			.then(() =>
-				Bluebird.map(IMAGES, (image) =>
-					promiseToBool(docker.getImage(image).inspect()),
+				Promise.all(
+					IMAGES.map((image) =>
+						promiseToBool(docker.getImage(image).inspect()),
+					),
 				),
 			)
 			.then((imagesFound) =>
@@ -164,8 +167,10 @@ describe('Garbage collection', function () {
 				return dockerStorage.garbageCollect(size + 1);
 			})
 			.then(() =>
-				Bluebird.map(IMAGES, (image) =>
-					promiseToBool(docker.getImage(image).inspect()),
+				Promise.all(
+					IMAGES.map((image) =>
+						promiseToBool(docker.getImage(image).inspect()),
+					),
 				),
 			)
 			.then((imagesFound) =>
