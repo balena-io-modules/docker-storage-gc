@@ -83,11 +83,13 @@ export const createTree = function (
 	return tree[root];
 };
 
-export function dockerImageTree(docker: Docker, layerMtimes: LayerMtimes) {
-	return Promise.all([
+export async function dockerImageTree(
+	docker: Docker,
+	layerMtimes: LayerMtimes,
+) {
+	const [images, containers] = await Promise.all([
 		docker.listImages({ all: true }),
 		docker.listContainers({ all: true }),
-	]).then(([images, containers]) =>
-		createTree(images, containers, layerMtimes),
-	);
+	]);
+	return createTree(images, containers, layerMtimes);
 }
