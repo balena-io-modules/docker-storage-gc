@@ -1,4 +1,3 @@
-import Bluebird from 'bluebird';
 import * as es from 'event-stream';
 import JSONStream from 'JSONStream';
 import type Docker from 'dockerode';
@@ -53,41 +52,40 @@ interface DockerEvent {
 	timeNano: '1701265973112542359';
 }
 
-export const parseEventStream = (docker: Docker) =>
-	docker.listImages({ all: true }).then(function (images) {
-		const layerMtimes: LayerMtimes = {};
-		// Start off by setting all current images to an mtime of 0 as we've never seen them used
-		// If we've never seen the layer used then it's likely created before we started
-		// listening and so set the last used time to 0 as we know it should be older than
-		// anything we've seen
-		for (const image of images) {
-			layerMtimes[image.Id] = 0;
-		}
+export const parseEventStream = async (docker: Docker) => {
+	const images = await docker.listImages({ all: true });
+	const layerMtimes: LayerMtimes = {};
+	// Start off by setting all current images to an mtime of 0 as we've never seen them used
+	// If we've never seen the layer used then it's likely created before we started
+	// listening and so set the last used time to 0 as we know it should be older than
+	// anything we've seen
+	for (const image of images) {
+		layerMtimes[image.Id] = 0;
+	}
 
-		return es.pipeline(
-			JSONStream.parse(undefined) as any as es.MapStream,
-			es.mapSync(function ({ status, id, from, timeNano }: DockerEvent) {
-				if (IMAGE_EVENTS.includes(status)) {
-					if (status === 'delete') {
-						if (layerMtimes[id] != null) {
-							delete layerMtimes[id];
-						}
-					} else {
-						layerMtimes[id] = timeNano;
+	return es.pipeline(
+		JSONStream.parse(undefined) as any as es.MapStream,
+		es.mapSync(function ({ status, id, from, timeNano }: DockerEvent) {
+			if (IMAGE_EVENTS.includes(status)) {
+				if (status === 'delete') {
+					if (layerMtimes[id] != null) {
+						delete layerMtimes[id];
 					}
-				} else if (CONTAINER_EVENTS.includes(status)) {
-					layerMtimes[from] = timeNano;
+				} else {
+					layerMtimes[id] = timeNano;
 				}
-				return layerMtimes;
-			}),
-		);
-	});
+			} else if (CONTAINER_EVENTS.includes(status)) {
+				layerMtimes[from] = timeNano;
+			}
+			return layerMtimes;
+		}),
+	);
+};
 
-export function dockerMtimeStream(docker: Docker) {
-	return Bluebird.join(
+export async function dockerMtimeStream(docker: Docker) {
+	const [stream, streamParser] = await Promise.all([
 		docker.getEvents(),
 		parseEventStream(docker),
-		(stream, streamParser) =>
-			es.pipeline(stream as any as es.MapStream, streamParser),
-	);
+	]);
+	return es.pipeline(stream as any as es.MapStream, streamParser);
 }

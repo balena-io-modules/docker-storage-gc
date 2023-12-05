@@ -1,4 +1,3 @@
-import Bluebird from 'bluebird';
 import type Docker from 'dockerode';
 import { LayerMtimes } from './docker-event-stream';
 
@@ -84,11 +83,13 @@ export const createTree = function (
 	return tree[root];
 };
 
-export function dockerImageTree(docker: Docker, layerMtimes: LayerMtimes) {
-	return Bluebird.join(
+export async function dockerImageTree(
+	docker: Docker,
+	layerMtimes: LayerMtimes,
+) {
+	const [images, containers] = await Promise.all([
 		docker.listImages({ all: true }),
 		docker.listContainers({ all: true }),
-		layerMtimes,
-		createTree,
-	);
+	]);
+	return createTree(images, containers, layerMtimes);
 }
