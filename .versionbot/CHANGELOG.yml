@@ -1,4 +1,22 @@
 - commits:
+    - subject: Use native promises with dockerode
+      hash: e437d1b00cbde9984187cd4fcf055c307df7fcde
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+    - subject: Convert to async/await
+      hash: e257c65cc92e0524ed7bf08465099c18c2248724
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 4.0.1
+  title: ""
+  date: 2023-12-05T22:27:53.958Z
+- commits:
     - subject: Update to dockerode 3.x
       hash: c6b5416ef2026eba121414cbd349d0717a6d3a68
       body: ""
