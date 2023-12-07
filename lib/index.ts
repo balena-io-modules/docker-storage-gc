@@ -1,4 +1,3 @@
-import Bluebird, { Disposer } from 'bluebird';
 import { EventEmitter } from 'eventemitter3';
 import { DockerProgress } from 'docker-progress';
 import Docker from 'dockerode';
@@ -204,33 +203,20 @@ export default class DockerGC {
 		}
 	}
 
-	private getOutput(image: string, command: string[]): Promise<string> {
-		return Bluebird.using(
-			this.runDisposer(image, command),
-			async (container) => {
-				const logs = await container.logs({ stdout: true, follow: true });
-				return await streamToString(logs);
-			},
-		);
-	}
-
-	private runDisposer(
-		image: string,
-		command: string[],
-	): Disposer<Docker.Container> {
-		const containerPromise: Promise<[unknown, Docker.Container]> =
-			this.docker.run(
-				image,
-				command,
-				// @ts-expect-error -- The typings expect an array of streams but in reality they're optional
-				undefined,
-			);
-		return Bluebird.resolve(
-			containerPromise.then(([, container]) => container),
-		).disposer(async (container) => {
+	private async getOutput(image: string, command: string[]): Promise<string> {
+		const [, container] = await (this.docker.run(
+			image,
+			command,
+			// @ts-expect-error -- The typings expect an array of streams but in reality they're optional
+			undefined,
+		) as Promise<[unknown, Docker.Container]>);
+		try {
+			const logs = await container.logs({ stdout: true, follow: true });
+			return await streamToString(logs);
+		} finally {
 			await container.wait();
 			await container.remove();
-		});
+		}
 	}
 
 	public async getDaemonFreeSpace(): Promise<{
