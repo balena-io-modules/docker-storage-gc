@@ -1,4 +1,40 @@
 - commits:
+    - subject: Remove dependency on bluebird
+      hash: 943922d916cf5dccff6cc94ed497f3b4e29a6c07
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+    - subject: Remove dependency on lodash
+      hash: 4354905941a3696024ae035528e2afbaf81e9fa2
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+    - subject: Remove unnecessary check before deleting layer mtime info
+      hash: 5cc423ddf93e6f953dba90924dad8f9e1224ac9e
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+    - subject: Make it clear that `getImagesToRemove` mutates the passed in tree
+      hash: ab023bacab8b2b74fdbd3448353079f46ecbb960
+      body: |
+        The function was already mutating everything other than the root level
+        and as we do not re-use the tree anywhere it is safe to keep the
+        mutation but this helps avoid issues being caused by future refactoring
+        that might not consider that
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 4.0.2
+  title: ""
+  date: 2023-12-07T13:58:54.904Z
+- commits:
     - subject: Use native promises with dockerode
       hash: e437d1b00cbde9984187cd4fcf055c307df7fcde
       body: ""
