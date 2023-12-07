@@ -18,12 +18,13 @@ type Metrics = EventEmitter<Events>;
 
 interface RemovableImageNode extends ImageNode {
 	removed?: true;
+	children: Record<string, RemovableImageNode>;
 }
 
 const getUnusedTreeLeafs = function (
 	tree: RemovableImageNode,
 	result: RemovableImageNode[] = [],
-) {
+): RemovableImageNode[] {
 	if (!tree.removed) {
 		const children = _(tree.children)
 			.values()
@@ -40,14 +41,17 @@ const getUnusedTreeLeafs = function (
 	return result;
 };
 
+/**
+ * This will mutate the passed in tree, marking the images to be removed as removed.
+ * Do not re-use the tree for multiple calls to this function as it will cause issues.
+ */
 const getImagesToRemove = function (
 	tree: RemovableImageNode,
 	reclaimSpace: number,
 	metrics: Metrics,
-) {
+): RemovableImageNode[] {
 	// Removes the oldest, largest leafs first.
 	// This should avoid trying to remove images with children.
-	tree = _.clone(tree);
 	const result = [];
 	let size = 0;
 	while (size < reclaimSpace) {
