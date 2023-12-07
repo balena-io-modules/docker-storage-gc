@@ -20,7 +20,7 @@ export const createNode = (id: string): ImageNode => ({
 	size: 0,
 	repoTags: [],
 	repoDigests: [],
-	mtime: undefined,
+	mtime: 0,
 	children: {},
 });
 
@@ -45,7 +45,7 @@ export interface ImageNode {
 	size: number;
 	repoTags: string[];
 	repoDigests: string[];
-	mtime: LayerMtimes[string];
+	mtime: NonNullable<LayerMtimes[string]>;
 	children: Record<string, ImageNode>;
 	isUsedByAContainer?: boolean;
 }

@@ -1,5 +1,3 @@
-import Bluebird, { Disposer } from 'bluebird';
-import _ from 'lodash';
 import { EventEmitter } from 'eventemitter3';
 import { DockerProgress } from 'docker-progress';
 import Docker from 'dockerode';
@@ -18,17 +16,15 @@ type Metrics = EventEmitter<Events>;
 
 interface RemovableImageNode extends ImageNode {
 	removed?: true;
+	children: Record<string, RemovableImageNode>;
 }
 
 const getUnusedTreeLeafs = function (
 	tree: RemovableImageNode,
 	result: RemovableImageNode[] = [],
-) {
+): RemovableImageNode[] {
 	if (!tree.removed) {
-		const children = _(tree.children)
-			.values()
-			.filter(_.negate(_.property('removed')))
-			.value();
+		const children = Object.values(tree.children).filter((n) => !n.removed);
 		if (children.length === 0 && !tree.isUsedByAContainer) {
 			result.push(tree);
 		} else {
@@ -40,22 +36,30 @@ const getUnusedTreeLeafs = function (
 	return result;
 };
 
+const sortBy = <T extends object>(key: keyof T): ((a: T, b: T) => number) => {
+	return (a, b) => (a[key] > b[key] ? 1 : b[key] > a[key] ? -1 : 0);
+};
+const mtimeSort = sortBy('mtime');
+const sizeSort = sortBy('size');
+
+/**
+ * This will mutate the passed in tree, marking the images to be removed as removed.
+ * Do not re-use the tree for multiple calls to this function as it will cause issues.
+ */
 const getImagesToRemove = function (
 	tree: RemovableImageNode,
 	reclaimSpace: number,
 	metrics: Metrics,
-) {
+): RemovableImageNode[] {
 	// Removes the oldest, largest leafs first.
 	// This should avoid trying to remove images with children.
-	tree = _.clone(tree);
 	const result = [];
 	let size = 0;
 	while (size < reclaimSpace) {
-		const leafs = _.orderBy(
-			getUnusedTreeLeafs(tree),
-			['mtime', 'size'],
-			['asc', 'desc'],
-		);
+		const leafs = getUnusedTreeLeafs(tree).sort((a, b) => {
+			// mtime asc, size desc
+			return mtimeSort(a, b) || -sizeSort(a, b);
+		});
 		if (leafs.length === 0) {
 			break;
 		}
@@ -199,33 +203,20 @@ export default class DockerGC {
 		}
 	}
 
-	private getOutput(image: string, command: string[]): Promise<string> {
-		return Bluebird.using(
-			this.runDisposer(image, command),
-			async (container) => {
-				const logs = await container.logs({ stdout: true, follow: true });
-				return await streamToString(logs);
-			},
-		);
-	}
-
-	private runDisposer(
-		image: string,
-		command: string[],
-	): Disposer<Docker.Container> {
-		const containerPromise: Promise<[unknown, Docker.Container]> =
-			this.docker.run(
-				image,
-				command,
-				// @ts-expect-error -- The typings expect an array of streams but in reality they're optional
-				undefined,
-			);
-		return Bluebird.resolve(
-			containerPromise.then(([, container]) => container),
-		).disposer(async (container) => {
+	private async getOutput(image: string, command: string[]): Promise<string> {
+		const [, container] = await (this.docker.run(
+			image,
+			command,
+			// @ts-expect-error -- The typings expect an array of streams but in reality they're optional
+			undefined,
+		) as Promise<[unknown, Docker.Container]>);
+		try {
+			const logs = await container.logs({ stdout: true, follow: true });
+			return await streamToString(logs);
+		} finally {
 			await container.wait();
 			await container.remove();
-		});
+		}
 	}
 
 	public async getDaemonFreeSpace(): Promise<{
@@ -236,7 +227,9 @@ export default class DockerGC {
 		const baseImage = await this.baseImagePromise;
 
 		// Ensure the image is available (if it is this is essentially a no-op)
-		await this.dockerProgress.pull(baseImage, _.noop);
+		await this.dockerProgress.pull(baseImage, () => {
+			// noop
+		});
 
 		const spaceStr = await this.getOutput(baseImage, [
 			'/bin/df',
