@@ -68,9 +68,7 @@ export const parseEventStream = async (docker: Docker) => {
 		es.mapSync(function ({ status, id, from, timeNano }: DockerEvent) {
 			if (IMAGE_EVENTS.includes(status)) {
 				if (status === 'delete') {
-					if (layerMtimes[id] != null) {
-						delete layerMtimes[id];
-					}
+					delete layerMtimes[id];
 				} else {
 					layerMtimes[id] = timeNano;
 				}
