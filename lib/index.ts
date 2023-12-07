@@ -1,5 +1,4 @@
 import Bluebird, { Disposer } from 'bluebird';
-import _ from 'lodash';
 import { EventEmitter } from 'eventemitter3';
 import { DockerProgress } from 'docker-progress';
 import Docker from 'dockerode';
@@ -26,10 +25,7 @@ const getUnusedTreeLeafs = function (
 	result: RemovableImageNode[] = [],
 ): RemovableImageNode[] {
 	if (!tree.removed) {
-		const children = _(tree.children)
-			.values()
-			.filter(_.negate(_.property('removed')))
-			.value();
+		const children = Object.values(tree.children).filter((n) => !n.removed);
 		if (children.length === 0 && !tree.isUsedByAContainer) {
 			result.push(tree);
 		} else {
@@ -40,6 +36,12 @@ const getUnusedTreeLeafs = function (
 	}
 	return result;
 };
+
+const sortBy = <T extends object>(key: keyof T): ((a: T, b: T) => number) => {
+	return (a, b) => (a[key] > b[key] ? 1 : b[key] > a[key] ? -1 : 0);
+};
+const mtimeSort = sortBy('mtime');
+const sizeSort = sortBy('size');
 
 /**
  * This will mutate the passed in tree, marking the images to be removed as removed.
@@ -55,11 +57,10 @@ const getImagesToRemove = function (
 	const result = [];
 	let size = 0;
 	while (size < reclaimSpace) {
-		const leafs = _.orderBy(
-			getUnusedTreeLeafs(tree),
-			['mtime', 'size'],
-			['asc', 'desc'],
-		);
+		const leafs = getUnusedTreeLeafs(tree).sort((a, b) => {
+			// mtime asc, size desc
+			return mtimeSort(a, b) || -sizeSort(a, b);
+		});
 		if (leafs.length === 0) {
 			break;
 		}
@@ -240,7 +241,9 @@ export default class DockerGC {
 		const baseImage = await this.baseImagePromise;
 
 		// Ensure the image is available (if it is this is essentially a no-op)
-		await this.dockerProgress.pull(baseImage, _.noop);
+		await this.dockerProgress.pull(baseImage, () => {
+			// noop
+		});
 
 		const spaceStr = await this.getOutput(baseImage, [
 			'/bin/df',

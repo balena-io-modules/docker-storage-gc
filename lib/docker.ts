@@ -1,8 +1,7 @@
 import Docker from 'dockerode';
-import _ from 'lodash';
 
 const getDockerConnectOpts = function (hostObj: Docker.DockerOptions) {
-	if (!_.isEmpty(hostObj)) {
+	if (Object.keys(hostObj).length > 0) {
 		return hostObj;
 	}
 	return {
