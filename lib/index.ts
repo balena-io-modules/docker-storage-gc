@@ -181,7 +181,7 @@ export default class DockerGC {
 		this.metrics.emit('spaceReclaimed', reclaimSpace);
 
 		const tree = await dockerImageTree(this.docker, this.currentMtimes);
-		const images = await getImagesToRemove(tree, reclaimSpace, this.metrics);
+		const images = getImagesToRemove(tree, reclaimSpace, this.metrics);
 		for (const image of images) {
 			try {
 				await this.removeImage(image);
