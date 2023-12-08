@@ -1,4 +1,15 @@
 - commits:
+    - subject: Remove unnecessary await
+      hash: 5c6e956056c17a1ec83781447e40f8e751279b4a
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 4.0.3
+  title: ""
+  date: 2023-12-08T16:13:08.052Z
+- commits:
     - subject: Remove dependency on bluebird
       hash: 943922d916cf5dccff6cc94ed497f3b4e29a6c07
       body: ""
