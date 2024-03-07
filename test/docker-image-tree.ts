@@ -3,7 +3,8 @@ import { expect } from 'chai';
 import fs from 'fs';
 import tk from 'timekeeper';
 import es from 'event-stream';
-import { LayerMtimes, parseEventStream } from '../build/docker-event-stream';
+import type { LayerMtimes } from '../build/docker-event-stream';
+import { parseEventStream } from '../build/docker-event-stream';
 import { createTree } from '../build/docker-image-tree';
 import { getDocker } from '../build/docker';
 

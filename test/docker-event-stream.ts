@@ -1,4 +1,4 @@
-import { LayerMtimes } from '../build/docker-event-stream';
+import type { LayerMtimes } from '../build/docker-event-stream';
 
 import { expect } from 'chai';
 import fs from 'fs';

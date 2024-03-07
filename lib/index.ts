@@ -1,8 +1,10 @@
 import { EventEmitter } from 'eventemitter3';
 import { DockerProgress } from 'docker-progress';
 import Docker from 'dockerode';
-import { LayerMtimes, dockerMtimeStream } from './docker-event-stream';
-import { ImageNode, dockerImageTree } from './docker-image-tree';
+import type { LayerMtimes } from './docker-event-stream';
+import { dockerMtimeStream } from './docker-event-stream';
+import type { ImageNode } from './docker-image-tree';
+import { dockerImageTree } from './docker-image-tree';
 import { getDocker } from './docker';
 
 interface Events {
