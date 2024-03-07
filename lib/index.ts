@@ -19,8 +19,15 @@ type Metrics = EventEmitter<Events>;
 interface RemovableImageNode extends ImageNode {
 	removed?: true;
 	children: Record<string, RemovableImageNode>;
+	parent?: RemovableImageNode;
 }
 
+const isCandidateForRemoval = (node: RemovableImageNode): boolean => {
+	return (
+		!node.isUsedByAContainer &&
+		Object.values(node.children).every((n) => n.removed)
+	);
+};
 const getUnusedTreeLeafs = function (
 	tree: RemovableImageNode,
 	result: RemovableImageNode[] = [],
@@ -31,6 +38,9 @@ const getUnusedTreeLeafs = function (
 			result.push(tree);
 		} else {
 			for (const child of children) {
+				// We must ensure the parent is set so that we can re-check the parent
+				// as a candidate for removal when its children are removed
+				child.parent = tree;
 				getUnusedTreeLeafs(child, result);
 			}
 		}
@@ -57,19 +67,28 @@ const getImagesToRemove = function (
 	// This should avoid trying to remove images with children.
 	const result = [];
 	let size = 0;
-	while (size < reclaimSpace) {
-		const leafs = getUnusedTreeLeafs(tree).sort((a, b) => {
+	const leafs = getUnusedTreeLeafs(tree);
+	const resort = () => {
+		leafs.sort((a, b) => {
 			// mtime asc, size desc
 			return mtimeSort(a, b) || -sizeSort(a, b);
 		});
+	};
+	resort();
+	while (size < reclaimSpace) {
 		if (leafs.length === 0) {
 			break;
 		}
-		const leaf = leafs[0];
+		const leaf = leafs.shift()!;
 		if (leaf !== tree) {
 			// don't remove the tree root
 			result.push(leaf);
 			size += leaf.size;
+			if (leaf.parent != null && isCandidateForRemoval(leaf.parent)) {
+				// If the parent is now a candidate for deletion then add to the potential leafs and resort them
+				leafs.push(leaf.parent);
+				resort();
+			}
 		}
 		leaf.removed = true;
 	}
