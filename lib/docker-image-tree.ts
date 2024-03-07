@@ -1,5 +1,5 @@
 import type Docker from 'dockerode';
-import { LayerMtimes } from './docker-event-stream';
+import type { LayerMtimes } from './docker-event-stream';
 
 const saneRepoAttrs = function (repoAttrs: string[] | undefined) {
 	if (repoAttrs == null) {
