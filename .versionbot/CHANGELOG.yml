@@ -1,4 +1,15 @@
 - commits:
+    - subject: Update dependencies
+      hash: 16ce94acabffdd775fe302330592947f39746816
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 4.0.4
+  title: ""
+  date: 2024-03-07T14:54:58.532Z
+- commits:
     - subject: Remove unnecessary await
       hash: 5c6e956056c17a1ec83781447e40f8e751279b4a
       body: ""
