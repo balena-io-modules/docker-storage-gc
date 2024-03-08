@@ -14,7 +14,7 @@
   "license": "Apache 2.0",
   "description": "Automatically cleanup unused images based on various cache replacement algorithms",
   "dependencies": {
-    "@types/dockerode": "^3.3.24",
+    "@types/dockerode": "3.3.24",
     "@types/event-stream": "^4.0.5",
     "@types/JSONStream": "npm:@types/jsonstream@^0.8.33",
     "@types/node": "^16.18.87",
