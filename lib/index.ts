@@ -70,8 +70,8 @@ const getImagesToRemove = function (
 	const leafs = getUnusedTreeLeafs(tree);
 	const resort = () => {
 		leafs.sort((a, b) => {
-			// mtime asc, size desc
-			return mtimeSort(a, b) || -sizeSort(a, b);
+			// mtime desc, size asc
+			return -mtimeSort(a, b) || sizeSort(a, b);
 		});
 	};
 	resort();
@@ -79,7 +79,7 @@ const getImagesToRemove = function (
 		if (leafs.length === 0) {
 			break;
 		}
-		const leaf = leafs.shift()!;
+		const leaf = leafs.pop()!;
 		if (leaf !== tree) {
 			// don't remove the tree root
 			result.push(leaf);
