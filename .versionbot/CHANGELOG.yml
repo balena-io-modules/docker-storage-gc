@@ -1,4 +1,20 @@
 - commits:
+    - subject: Use partial updates for rebuilding the removal candidate list
+      hash: 7e4cbd837aae0246586e86a517e2b53132cf2728
+      body: |
+        This means that we now check only the parent of the node we're removing
+        to see if it is now a valid candidate and can avoid rebuilding, and
+        sorting, the full list from scratch every time. This removes
+        significant work in rebuilding/sorting the list on every iteration and
+        also reduces allocations/garbage collection overhead related to that
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Pagan Gazzard
+  version: 4.1.0
+  title: ""
+  date: 2024-03-08T15:05:26.868Z
+- commits:
     - subject: Update dependencies
       hash: 16ce94acabffdd775fe302330592947f39746816
       body: ""
