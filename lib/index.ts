@@ -155,6 +155,16 @@ export default class DockerGC {
 		stream.on('data', (layerMtimes: LayerMtimes) => {
 			this.currentMtimes = layerMtimes;
 		});
+		stream.on('error', async (err) => {
+			console.error('Error in mtime stream:', err);
+			stream.removeAllListeners();
+			stream.destroy();
+			try {
+				await this.setupMtimeStream();
+			} catch ($err) {
+				console.error('Error restarting mtime stream:', $err);
+			}
+		});
 	}
 
 	private removeImage(image: RemovableImageNode) {
