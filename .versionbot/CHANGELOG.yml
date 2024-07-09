@@ -1,4 +1,15 @@
 - commits:
+    - subject: Listen for errors on the mtime stream and set it back up as necessary
+      hash: f9ef13a27f6759bbec093c458430dc5874525f28
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 4.1.1
+  title: ""
+  date: 2024-07-09T14:36:04.429Z
+- commits:
     - subject: Use partial updates for rebuilding the removal candidate list
       hash: 7e4cbd837aae0246586e86a517e2b53132cf2728
       body: |
