@@ -9,7 +9,7 @@ import { createTree } from '../build/docker-image-tree';
 import { getDocker } from '../build/docker';
 
 const getLayerMtimes = async () => {
-	const docker = await getDocker({});
+	const docker = getDocker({});
 	const streamParser = await parseEventStream(docker);
 	return await new Promise<LayerMtimes>(function (resolve, reject) {
 		let mtimes: LayerMtimes;
@@ -18,7 +18,9 @@ const getLayerMtimes = async () => {
 			.pipe(streamParser)
 			.on('error', reject)
 			.pipe(es.mapSync((data: LayerMtimes) => (mtimes = data)))
-			.on('end', () => resolve(mtimes))
+			.on('end', () => {
+				resolve(mtimes);
+			})
 			.on('error', reject);
 	});
 };

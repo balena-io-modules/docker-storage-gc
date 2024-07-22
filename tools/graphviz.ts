@@ -4,7 +4,7 @@ const id = (tree: ImageNode) => `foo_${tree.id.slice(0, 7)}`;
 
 const label = function (tree: ImageNode) {
 	const name = tree.repoTags[0] || '\\<none\\>:\\<none\\>';
-	const mtime = new Date(tree.mtime!).toISOString();
+	const mtime = new Date(tree.mtime).toISOString();
 
 	return `label="{ ${tree.id.slice(0, 13)} | ${name} | { ${mtime} | ${
 		tree.size

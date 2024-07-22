@@ -50,7 +50,7 @@ describe('Garbage collection', function () {
 			}),
 		]);
 		docker = $docker;
-		return await dockerStorage.setupMtimeStream();
+		await dockerStorage.setupMtimeStream();
 	});
 
 	afterEach(function () {
