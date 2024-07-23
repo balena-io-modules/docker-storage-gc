@@ -1,4 +1,15 @@
 - commits:
+    - subject: Update dependencies and fix lint warnings
+      hash: e29f5cf40b682ef953afc7a2a87c367508de9b26
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 4.1.3
+  title: ""
+  date: 2024-07-23T10:15:45.731Z
+- commits:
     - subject: Retry reconnecting the mtime stream with an exponential backoff
       hash: db39fe8688e89267f2f46f8253313fd2f5ff3909
       body: ""
