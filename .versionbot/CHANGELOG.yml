@@ -1,4 +1,15 @@
 - commits:
+    - subject: Retry reconnecting the mtime stream with an exponential backoff
+      hash: db39fe8688e89267f2f46f8253313fd2f5ff3909
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 4.1.2
+  title: ""
+  date: 2024-07-23T00:21:38.799Z
+- commits:
     - subject: Listen for errors on the mtime stream and set it back up as necessary
       hash: f9ef13a27f6759bbec093c458430dc5874525f28
       body: ""
