@@ -104,7 +104,9 @@ const streamToString = (stream: NodeJS.ReadableStream) =>
 		stream
 			.on('error', reject)
 			.on('data', (chunk) => chunks.push(chunk))
-			.on('end', () => resolve(Buffer.concat(chunks).toString()));
+			.on('end', () => {
+				resolve(Buffer.concat(chunks).toString());
+			});
 	});
 
 const recordGcRunTime = function (
@@ -179,8 +181,8 @@ export default class DockerGC {
 
 	private removeImage(image: RemovableImageNode) {
 		return (
-			this.tryRemoveImageBy(image, image.repoTags, 'tag') ||
-			this.tryRemoveImageBy(image, image.repoDigests, 'digest') ||
+			this.tryRemoveImageBy(image, image.repoTags, 'tag') ??
+			this.tryRemoveImageBy(image, image.repoDigests, 'digest') ??
 			this.tryRemoveImageBy(image, [image.id], 'id')
 		);
 	}

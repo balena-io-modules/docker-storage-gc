@@ -12,7 +12,7 @@ describe('parseEventStream', function () {
 	});
 
 	it('should return updated mtimes', async () => {
-		const docker = await getDocker({});
+		const docker = getDocker({});
 		const streamParser = await parseEventStream(docker);
 		const data = await new Promise<LayerMtimes>(function (resolve, reject) {
 			let mtimes: LayerMtimes;
@@ -22,7 +22,9 @@ describe('parseEventStream', function () {
 				.pipe(streamParser)
 				.on('error', reject)
 				.pipe(es.mapSync(($data: LayerMtimes) => (mtimes = $data)))
-				.on('end', () => resolve(mtimes))
+				.on('end', () => {
+					resolve(mtimes);
+				})
 				.on('error', reject);
 		});
 		expect(data)

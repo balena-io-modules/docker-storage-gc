@@ -14,10 +14,10 @@
   "license": "Apache 2.0",
   "description": "Automatically cleanup unused images based on various cache replacement algorithms",
   "dependencies": {
-    "@types/dockerode": "3.3.24",
+    "@types/dockerode": "^3.3.24",
     "@types/event-stream": "^4.0.5",
     "@types/JSONStream": "npm:@types/jsonstream@^0.8.33",
-    "@types/node": "^16.18.87",
+    "@types/node": "^16.18.103",
     "docker-progress": "^5.2.3",
     "dockerode": "^4.0.2",
     "event-stream": "^4.0.1",
@@ -25,14 +25,14 @@
     "JSONStream": "^1.3.5"
   },
   "devDependencies": {
-    "@balena/lint": "^7.3.0",
-    "@types/chai": "^4.3.12",
-    "@types/mocha": "^10.0.6",
+    "@balena/lint": "^8.2.7",
+    "@types/chai": "^4.3.16",
+    "@types/mocha": "^10.0.7",
     "chai": "^4.4.1",
-    "mocha": "^10.3.0",
+    "mocha": "^10.7.0",
     "timekeeper": "^2.3.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.2"
+    "typescript": "^5.5.3"
   },
   "versionist": {
     "publishedAt": "2024-07-23T00:21:38.911Z"
