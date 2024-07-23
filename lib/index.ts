@@ -6,6 +6,7 @@ import { dockerMtimeStream } from './docker-event-stream';
 import type { ImageNode } from './docker-image-tree';
 import { dockerImageTree } from './docker-image-tree';
 import { getDocker } from './docker';
+import { setTimeout } from 'timers/promises';
 
 interface Events {
 	numberImagesToRemove(n: number): void;
@@ -150,6 +151,19 @@ export default class DockerGC {
 		}));
 	}
 
+	public minDelayMs = 1000;
+	public maxDelayMs = 60000;
+	private async restartMtimeStream(attempts = 0) {
+		const delayMs = Math.min(2 ** attempts * this.minDelayMs, this.maxDelayMs);
+		await setTimeout(delayMs);
+		try {
+			await this.setupMtimeStream();
+		} catch ($err) {
+			console.error('Error restarting mtime stream:', $err);
+			void this.restartMtimeStream(attempts + 1);
+		}
+	}
+
 	public async setupMtimeStream(): Promise<void> {
 		const stream = await dockerMtimeStream(this.docker);
 		stream.on('data', (layerMtimes: LayerMtimes) => {
@@ -159,11 +173,7 @@ export default class DockerGC {
 			console.error('Error in mtime stream:', err);
 			stream.removeAllListeners();
 			stream.destroy();
-			try {
-				await this.setupMtimeStream();
-			} catch ($err) {
-				console.error('Error restarting mtime stream:', $err);
-			}
+			void this.restartMtimeStream();
 		});
 	}
 
