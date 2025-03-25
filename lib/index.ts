@@ -171,7 +171,7 @@ export default class DockerGC {
 		stream.on('data', (layerMtimes: LayerMtimes) => {
 			this.currentMtimes = layerMtimes;
 		});
-		stream.on('error', async (err) => {
+		stream.on('error', (err) => {
 			console.error('Error in mtime stream:', err);
 			stream.removeAllListeners();
 			stream.destroy();
