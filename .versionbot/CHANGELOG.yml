@@ -1,4 +1,15 @@
 - commits:
+    - subject: Update @balena/lint to 9.x
+      hash: 2477ef0c98ac92a9a0ba61ee0fe0b424547f21ae
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 4.1.4
+  title: ""
+  date: 2025-03-25T17:06:08.012Z
+- commits:
     - subject: Update dependencies and fix lint warnings
       hash: e29f5cf40b682ef953afc7a2a87c367508de9b26
       body: ""
@@ -516,11 +527,9 @@
 - commits:
     - subject: "Add follow: true to container.logs call"
 - commits:
-    - body: >-
+    - body: |-
         This makes it return a stream (which was the default behaviour before
-
         https://github.com/apocas/dockerode/commit/d9727f736e13ce33228a6ddb920e911bc1a9ee2a
-
         Connects-To: #21
 - version: 2.1.0
 - date: 2018-02-23T18:16:28Z
