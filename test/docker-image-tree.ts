@@ -33,12 +33,12 @@ describe('createTree', function () {
 	it('should return a tree of images', async function () {
 		const images = (
 			await import('./fixtures/docker-images.json', {
-				assert: { type: 'json' },
+				with: { type: 'json' },
 			})
 		).default as ImageInfo[];
 		const containers = (
 			await import('./fixtures/docker-containers.json', {
-				assert: { type: 'json' },
+				with: { type: 'json' },
 			})
 		).default as ContainerInfo[];
 		const mtimes = await getLayerMtimes();
@@ -77,7 +77,8 @@ describe('createTree', function () {
 												size: 330389,
 												repoTags: ['project2'],
 												repoDigests: [],
-												// eslint-disable-next-line @typescript-eslint/no-loss-of-precision
+
+												// eslint-disable-next-line no-loss-of-precision
 												mtime: 1448576073085559863,
 												isUsedByAContainer: false,
 												children: {
