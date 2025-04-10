@@ -17,7 +17,7 @@
     "@types/dockerode": "^3.3.24",
     "@types/event-stream": "^4.0.5",
     "@types/JSONStream": "npm:@types/jsonstream@^0.8.33",
-    "@types/node": "^16.18.103",
+    "@types/node": "^22.0.0",
     "docker-progress": "^5.2.3",
     "dockerode": "^4.0.2",
     "event-stream": "^4.0.1",
