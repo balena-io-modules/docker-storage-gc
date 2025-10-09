@@ -1,6 +1,7 @@
 import * as es from 'event-stream';
 import JSONStream from 'JSONStream';
 import type Docker from 'dockerode';
+import { Stream } from 'node:stream';
 
 const IMAGE_EVENTS = ['delete', 'import', 'pull', 'push', 'tag'];
 
@@ -65,17 +66,25 @@ export const parseEventStream = async (docker: Docker) => {
 
 	return es.pipeline(
 		JSONStream.parse(undefined) as any as es.MapStream,
-		es.mapSync(function ({ status, id, from, timeNano }: DockerEvent) {
-			if (IMAGE_EVENTS.includes(status)) {
-				if (status === 'delete') {
-					delete layerMtimes[id];
-				} else {
-					layerMtimes[id] = timeNano;
+		new Stream.Transform({
+			objectMode: true,
+			transform(evt: DockerEvent, _encoding, cb) {
+				try {
+					const { status, id, from, timeNano } = evt;
+					if (IMAGE_EVENTS.includes(status)) {
+						if (status === 'delete') {
+							delete layerMtimes[id];
+						} else {
+							layerMtimes[id] = timeNano;
+						}
+					} else if (CONTAINER_EVENTS.includes(status)) {
+						layerMtimes[from] = timeNano;
+					}
+					cb(null, layerMtimes);
+				} catch (err: any) {
+					cb(err);
 				}
-			} else if (CONTAINER_EVENTS.includes(status)) {
-				layerMtimes[from] = timeNano;
-			}
-			return layerMtimes;
+			},
 		}),
 	);
 };

@@ -2,7 +2,7 @@ import type { LayerMtimes } from '../build/docker-event-stream';
 
 import { expect } from 'chai';
 import fs from 'fs';
-import es from 'event-stream';
+import { Stream } from 'node:stream';
 import { parseEventStream } from '../build/docker-event-stream';
 import { getDocker } from '../build/docker';
 
@@ -21,11 +21,20 @@ describe('parseEventStream', function () {
 				.createReadStream(__dirname + '/fixtures/docker-events.json')
 				.pipe(streamParser)
 				.on('error', reject)
-				.pipe(es.mapSync(($data: LayerMtimes) => (mtimes = $data)))
+				.pipe(
+					new Stream.Transform({
+						objectMode: true,
+						transform($data: LayerMtimes, _encoding, cb) {
+							mtimes = $data;
+							cb();
+						},
+					}),
+				)
 				.on('end', () => {
 					resolve(mtimes);
 				})
-				.on('error', reject);
+				.on('error', reject)
+				.resume();
 		});
 		expect(data)
 			.to.have.property('busybox:latest')

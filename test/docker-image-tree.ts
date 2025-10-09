@@ -2,7 +2,7 @@ import type { ContainerInfo, ImageInfo } from 'dockerode';
 import { expect } from 'chai';
 import fs from 'fs';
 import tk from 'timekeeper';
-import es from 'event-stream';
+import { Stream } from 'node:stream';
 import type { LayerMtimes } from '../build/docker-event-stream';
 import { parseEventStream } from '../build/docker-event-stream';
 import { createTree } from '../build/docker-image-tree';
@@ -17,11 +17,20 @@ const getLayerMtimes = async () => {
 			.createReadStream(__dirname + '/fixtures/docker-events.json')
 			.pipe(streamParser)
 			.on('error', reject)
-			.pipe(es.mapSync((data: LayerMtimes) => (mtimes = data)))
+			.pipe(
+				new Stream.Transform({
+					objectMode: true,
+					transform($data: LayerMtimes, _encoding, cb) {
+						mtimes = $data;
+						cb();
+					},
+				}),
+			)
 			.on('end', () => {
 				resolve(mtimes);
 			})
-			.on('error', reject);
+			.on('error', reject)
+			.resume();
 	});
 };
 
