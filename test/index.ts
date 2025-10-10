@@ -41,15 +41,12 @@ describe('Garbage collection', function () {
 	beforeEach(async function () {
 		dockerStorage = new DockerGC();
 		// Use either local or CI docker
-		const [$docker] = await Promise.all([
-			getDocker({
-				socketPath: '/tmp/dind/docker.sock',
-			}),
-			dockerStorage.setDocker({
-				socketPath: '/tmp/dind/docker.sock',
-			}),
-		]);
-		docker = $docker;
+		docker = getDocker({
+			socketPath: '/tmp/dind/docker.sock',
+		});
+		await dockerStorage.setDocker({
+			socketPath: '/tmp/dind/docker.sock',
+		});
 		await dockerStorage.setupMtimeStream();
 	});
 
