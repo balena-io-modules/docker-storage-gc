@@ -13,13 +13,15 @@ describe('parseEventStream', function () {
 
 	it('should return updated mtimes', async () => {
 		const docker = getDocker({});
-		const streamParser = await parseEventStream(docker);
+		const streamParsers = await parseEventStream(docker);
 		const data = await new Promise<LayerMtimes>(function (resolve, reject) {
 			let mtimes: LayerMtimes;
 
 			return fs
 				.createReadStream(__dirname + '/fixtures/docker-events.json')
-				.pipe(streamParser)
+				.pipe(streamParsers[0])
+				.on('error', reject)
+				.pipe(streamParsers[1])
 				.on('error', reject)
 				.pipe(
 					new Stream.Transform({

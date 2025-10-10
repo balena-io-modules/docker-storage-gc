@@ -1,4 +1,3 @@
-import * as es from 'event-stream';
 import JSONStream from 'JSONStream';
 import type Docker from 'dockerode';
 import { Stream } from 'node:stream';
@@ -64,8 +63,8 @@ export const parseEventStream = async (docker: Docker) => {
 		layerMtimes[image.Id] = 0;
 	}
 
-	return es.pipeline(
-		JSONStream.parse(undefined) as any as es.MapStream,
+	return [
+		JSONStream.parse(undefined),
 		new Stream.Transform({
 			objectMode: true,
 			transform(evt: DockerEvent, _encoding, cb) {
@@ -86,7 +85,7 @@ export const parseEventStream = async (docker: Docker) => {
 				}
 			},
 		}),
-	);
+	] as const;
 };
 
 export async function dockerMtimeStream(docker: Docker) {
@@ -94,5 +93,7 @@ export async function dockerMtimeStream(docker: Docker) {
 		docker.getEvents(),
 		parseEventStream(docker),
 	]);
-	return es.pipeline(stream as any as es.MapStream, streamParser);
+	return Stream.pipeline(stream, ...streamParser, () => {
+		// noop
+	});
 }
