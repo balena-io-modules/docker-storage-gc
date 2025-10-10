@@ -11,29 +11,20 @@ import { getDocker } from '../build/docker';
 const getLayerMtimes = async () => {
 	const docker = getDocker({});
 	const streamParsers = await parseEventStream(docker);
-	return await new Promise<LayerMtimes>(function (resolve, reject) {
-		let mtimes: LayerMtimes;
-		return fs
-			.createReadStream(__dirname + '/fixtures/docker-events.json')
-			.pipe(streamParsers[0])
-			.on('error', reject)
-			.pipe(streamParsers[1])
-			.on('error', reject)
-			.pipe(
-				new Stream.Transform({
-					objectMode: true,
-					transform($data: LayerMtimes, _encoding, cb) {
-						mtimes = $data;
-						cb();
-					},
-				}),
-			)
-			.on('end', () => {
-				resolve(mtimes);
-			})
-			.on('error', reject)
-			.resume();
-	});
+
+	let mtimes: LayerMtimes;
+	await Stream.promises.pipeline(
+		fs.createReadStream(__dirname + '/fixtures/docker-events.json'),
+		...streamParsers,
+		new Stream.Transform({
+			objectMode: true,
+			transform($data: LayerMtimes, _encoding, cb) {
+				mtimes = $data;
+				cb();
+			},
+		}),
+	);
+	return mtimes!;
 };
 
 describe('createTree', function () {
