@@ -1,4 +1,22 @@
 - commits:
+    - subject: Switch from `es.pipeline` to native `pipeline`
+      hash: cc00659e44368febbd53f1c3839881162f889caf
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+    - subject: Switch from `es.mapSync` to native `Transform` stream
+      hash: d7a7097e210da0f0bf539fdfc3388403c2fa48cd
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 4.1.7
+  title: ""
+  date: 2025-10-13T09:21:51.527Z
+- commits:
     - subject: Update dependencies
       hash: f47845450dac6d68994b1343b8e86fe150face84
       body: ""
