@@ -2,7 +2,7 @@ import type { ContainerInfo, ImageInfo } from 'dockerode';
 import { expect } from 'chai';
 import fs from 'fs';
 import tk from 'timekeeper';
-import es from 'event-stream';
+import { Stream } from 'node:stream';
 import type { LayerMtimes } from '../build/docker-event-stream';
 import { parseEventStream } from '../build/docker-event-stream';
 import { createTree } from '../build/docker-image-tree';
@@ -10,19 +10,21 @@ import { getDocker } from '../build/docker';
 
 const getLayerMtimes = async () => {
 	const docker = getDocker({});
-	const streamParser = await parseEventStream(docker);
-	return await new Promise<LayerMtimes>(function (resolve, reject) {
-		let mtimes: LayerMtimes;
-		return fs
-			.createReadStream(__dirname + '/fixtures/docker-events.json')
-			.pipe(streamParser)
-			.on('error', reject)
-			.pipe(es.mapSync((data: LayerMtimes) => (mtimes = data)))
-			.on('end', () => {
-				resolve(mtimes);
-			})
-			.on('error', reject);
-	});
+	const streamParsers = await parseEventStream(docker);
+
+	let mtimes: LayerMtimes;
+	await Stream.promises.pipeline(
+		fs.createReadStream(__dirname + '/fixtures/docker-events.json'),
+		...streamParsers,
+		new Stream.Transform({
+			objectMode: true,
+			transform($data: LayerMtimes, _encoding, cb) {
+				mtimes = $data;
+				cb();
+			},
+		}),
+	);
+	return mtimes!;
 };
 
 describe('createTree', function () {
