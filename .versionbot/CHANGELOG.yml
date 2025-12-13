@@ -1,4 +1,15 @@
 - commits:
+    - subject: Add public method to destroy mtime stream
+      hash: d0aed14669a0318e4a83dee5b78b0ee24054e3db
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: joshbwlng
+  version: 4.2.0
+  title: ""
+  date: 2025-12-13T07:45:39.491Z
+- commits:
     - subject: Switch from `es.pipeline` to native `pipeline`
       hash: cc00659e44368febbd53f1c3839881162f889caf
       body: ""
