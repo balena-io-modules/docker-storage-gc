@@ -7,6 +7,7 @@ import type { ImageNode } from './docker-image-tree';
 import { dockerImageTree } from './docker-image-tree';
 import { getDocker } from './docker';
 import { setTimeout } from 'timers/promises';
+import type { Transform } from 'node:stream';
 
 interface Events {
 	numberImagesToRemove(n: number): void;
@@ -125,6 +126,7 @@ export default class DockerGC {
 	private dockerProgress: DockerProgress;
 	private currentMtimes: LayerMtimes = {};
 	private baseImagePromise: Promise<string>;
+	private mtimeStream: Transform | undefined;
 
 	public setHostname(hostname: string): void {
 		this.host = hostname;
@@ -167,16 +169,26 @@ export default class DockerGC {
 	}
 
 	public async setupMtimeStream(): Promise<void> {
-		const stream = await dockerMtimeStream(this.docker);
-		stream.on('data', (layerMtimes: LayerMtimes) => {
+		if (this.mtimeStream != null) {
+			return;
+		}
+		this.mtimeStream = await dockerMtimeStream(this.docker);
+		this.mtimeStream.on('data', (layerMtimes: LayerMtimes) => {
 			this.currentMtimes = layerMtimes;
 		});
-		stream.on('error', (err) => {
+		this.mtimeStream.on('error', (err) => {
 			console.error('Error in mtime stream:', err);
-			stream.removeAllListeners();
-			stream.destroy();
+			this.destroyMtimeStream();
 			void this.restartMtimeStream();
 		});
+	}
+
+	public destroyMtimeStream(): void {
+		if (this.mtimeStream != null) {
+			this.mtimeStream.removeAllListeners();
+			this.mtimeStream.destroy();
+			this.mtimeStream = undefined;
+		}
 	}
 
 	private removeImage(image: RemovableImageNode) {
