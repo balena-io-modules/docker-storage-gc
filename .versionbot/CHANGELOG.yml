@@ -1,4 +1,17 @@
 - commits:
+    - subject: "Add id-token: write permission for NPM OIDC publishing"
+      hash: 935ab3b28eca27bba13d66d04f3d41f23da50188
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+  version: 4.2.1
+  title: ""
+  date: 2026-02-23T21:39:05.631Z
+- commits:
     - subject: Add public method to destroy mtime stream
       hash: d0aed14669a0318e4a83dee5b78b0ee24054e3db
       body: ""
