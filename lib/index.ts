@@ -220,7 +220,17 @@ export default class DockerGC {
 					console.log(
 						`[GC (${this.host}] Removing image : ${attribute} (id: ${image.id})`,
 					);
-					await this.docker.getImage(attribute).remove({ noprune: true });
+					try {
+						await this.docker.getImage(attribute).remove({ noprune: true });
+					} catch (e: any) {
+						if (e.statusCode === 404) {
+							console.log(
+								`[GC (${this.host}] Image already removed: ${attribute} (id: ${image.id})`,
+							);
+							continue;
+						}
+						throw e;
+					}
 					this.metrics.emit('imageRemoved', removalType);
 				}
 			})();
