@@ -1,4 +1,15 @@
 - commits:
+    - subject: Treat already removed images as a noop
+      hash: 8737ea0f7b1ceefdef2cee60aa7f7a523832fb6d
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: joshbwlng
+  version: 4.2.2
+  title: ""
+  date: 2026-03-21T03:35:48.740Z
+- commits:
     - subject: "Add id-token: write permission for NPM OIDC publishing"
       hash: 935ab3b28eca27bba13d66d04f3d41f23da50188
       body: ""
