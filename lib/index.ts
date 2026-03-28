@@ -172,7 +172,7 @@ export default class DockerGC {
 		if (this.mtimeStream != null) {
 			return;
 		}
-		this.mtimeStream = await dockerMtimeStream(this.docker);
+		this.mtimeStream = await dockerMtimeStream(this.docker, this.currentMtimes);
 		this.mtimeStream.on('data', (layerMtimes: LayerMtimes) => {
 			this.currentMtimes = layerMtimes;
 		});

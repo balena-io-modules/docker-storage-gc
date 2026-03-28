@@ -50,15 +50,37 @@ interface DockerEvent {
 	timeNano: '1701265973112542359';
 }
 
-export const parseEventStream = async (docker: Docker) => {
+export const parseEventStream = async (
+	docker: Docker,
+	layerMtimes: LayerMtimes = new Map(),
+) => {
 	const images = await docker.listImages({ all: true });
-	const layerMtimes: LayerMtimes = new Map();
-	// Start off by setting all current images to an mtime of 0 as we've never seen them used
-	// If we've never seen the layer used then it's likely created before we started
-	// listening and so set the last used time to 0 as we know it should be older than
-	// anything we've seen
+
+	// Image events key by image ID, but container events key by
+	// image name/tag, so we need all three to avoid removing valid
+	// entries in the cleanup logic below
+	const knownKeys = new Set(
+		images.flatMap((image) => [
+			image.Id,
+			...(image.RepoTags ?? []),
+			...(image.RepoDigests ?? []),
+		]),
+	);
+
+	// Remove entries for images that no longer exist
+	// This can happen if an image is deleted while the stream is down
+	for (const key of layerMtimes.keys()) {
+		if (!knownKeys.has(key)) {
+			layerMtimes.delete(key);
+		}
+	}
+
+	// Set mtime to 0 for images we haven't seen before, preserving
+	// existing mtimes across stream restarts
 	for (const image of images) {
-		layerMtimes.set(image.Id, 0);
+		if (!layerMtimes.has(image.Id)) {
+			layerMtimes.set(image.Id, 0);
+		}
 	}
 
 	return [
@@ -86,10 +108,13 @@ export const parseEventStream = async (docker: Docker) => {
 	] as const;
 };
 
-export async function dockerMtimeStream(docker: Docker) {
+export async function dockerMtimeStream(
+	docker: Docker,
+	layerMtimes: LayerMtimes = new Map(),
+) {
 	const [stream, streamParser] = await Promise.all([
 		docker.getEvents(),
-		parseEventStream(docker),
+		parseEventStream(docker, layerMtimes),
 	]);
 	return Stream.pipeline(stream, ...streamParser, () => {
 		// noop
