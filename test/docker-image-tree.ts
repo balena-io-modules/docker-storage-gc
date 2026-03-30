@@ -6,10 +6,9 @@ import { Stream } from 'node:stream';
 import type { LayerMtimes } from '../build/docker-event-stream';
 import { parseEventStream } from '../build/docker-event-stream';
 import { createTree } from '../build/docker-image-tree';
-import { getDocker } from '../build/docker';
+import { docker } from './lib/common';
 
 const getLayerMtimes = async () => {
-	const docker = getDocker({});
 	const streamParsers = await parseEventStream(docker);
 
 	let mtimes: LayerMtimes;
