@@ -5,9 +5,12 @@
   "scripts": {
     "lint": "balena-lint -t tsconfig.dev.json -e ts -e js lib test tools",
     "lint-fix": "balena-lint --fix  -t tsconfig.dev.json -e ts -e js lib test tools",
-    "pretest": "npm run prepare && docker rm -vf docker-storage-gc-tests && docker run --privileged --name docker-storage-gc-tests -v /tmp/dind:/var/run/ -d docker:24.0.5-dind && sleep 5 && docker exec docker-storage-gc-tests chown $(id -u) /var/run/docker.sock",
-    "test": "mocha --exit --require ts-node/register/transpile-only test/**/*.ts",
-    "posttest": "docker rm -vf docker-storage-gc-tests && npm run lint",
+    "pretest": "npm run prepare && npm run compose:docker-up",
+    "test": "mocha --exit --require ts-node/register/transpile-only test/*.ts",
+    "test:compose": "npm run compose:down && docker compose -f docker-compose.test.yml run --build --remove-orphans --rm sut",
+    "compose:docker-up": "npm run compose:down && docker compose -f docker-compose.test.yml up --remove-orphans --wait docker",
+    "compose:down": "docker compose -f docker-compose.test.yml down --remove-orphans --volumes",
+    "posttest": "npm run compose:down && npm run lint",
     "prepare": "npx tsc"
   },
   "author": "Balena Ltd. <hello@balena.io>",
