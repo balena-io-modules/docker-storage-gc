@@ -124,7 +124,7 @@ export default class DockerGC {
 	private host = 'unknown';
 	private docker: Docker;
 	private dockerProgress: DockerProgress;
-	private currentMtimes: LayerMtimes = {};
+	private currentMtimes: LayerMtimes = new Map();
 	private baseImagePromise: Promise<string>;
 	private mtimeStream: Transform | undefined;
 
@@ -133,7 +133,7 @@ export default class DockerGC {
 	}
 
 	public async setDocker(hostObj: Docker.DockerOptions): Promise<void> {
-		this.currentMtimes = {};
+		this.currentMtimes = new Map();
 		this.dockerProgress = new DockerProgress({
 			docker: new Docker(hostObj),
 		});

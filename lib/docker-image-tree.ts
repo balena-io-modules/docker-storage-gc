@@ -26,15 +26,16 @@ export const createNode = (id: string): ImageNode => ({
 
 const getMtimeFrom = function (layerMtimes: LayerMtimes, attributes: string[]) {
 	for (const key of attributes) {
-		if (layerMtimes[key] != null) {
-			return layerMtimes[key];
+		const mtime = layerMtimes.get(key);
+		if (mtime != null) {
+			return mtime;
 		}
 	}
 };
 
 const getMtime = function (tree: ImageNode, layerMtimes: LayerMtimes) {
 	return (
-		layerMtimes[tree.id] ??
+		layerMtimes.get(tree.id) ??
 		getMtimeFrom(layerMtimes, tree.repoTags) ??
 		getMtimeFrom(layerMtimes, tree.repoDigests)
 	);
@@ -45,7 +46,7 @@ export interface ImageNode {
 	size: number;
 	repoTags: string[];
 	repoDigests: string[];
-	mtime: NonNullable<LayerMtimes[string]>;
+	mtime: NonNullable<LayerMtimes extends Map<any, infer U> ? U : never>;
 	children: Record<string, ImageNode>;
 	isUsedByAContainer?: boolean;
 }

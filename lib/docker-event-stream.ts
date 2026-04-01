@@ -26,9 +26,7 @@ const CONTAINER_EVENTS = [
 	'unpause',
 ];
 
-export interface LayerMtimes {
-	[id: string]: string | number | undefined;
-}
+export type LayerMtimes = Map<string, string | number | undefined>;
 
 interface DockerEvent {
 	status: string;
@@ -54,13 +52,13 @@ interface DockerEvent {
 
 export const parseEventStream = async (docker: Docker) => {
 	const images = await docker.listImages({ all: true });
-	const layerMtimes: LayerMtimes = {};
+	const layerMtimes: LayerMtimes = new Map();
 	// Start off by setting all current images to an mtime of 0 as we've never seen them used
 	// If we've never seen the layer used then it's likely created before we started
 	// listening and so set the last used time to 0 as we know it should be older than
 	// anything we've seen
 	for (const image of images) {
-		layerMtimes[image.Id] = 0;
+		layerMtimes.set(image.Id, 0);
 	}
 
 	return [
@@ -72,12 +70,12 @@ export const parseEventStream = async (docker: Docker) => {
 					const { status, id, from, timeNano } = evt;
 					if (IMAGE_EVENTS.includes(status)) {
 						if (status === 'delete') {
-							delete layerMtimes[id];
+							layerMtimes.delete(id);
 						} else {
-							layerMtimes[id] = timeNano;
+							layerMtimes.set(id, timeNano);
 						}
 					} else if (CONTAINER_EVENTS.includes(status)) {
-						layerMtimes[from] = timeNano;
+						layerMtimes.set(from, timeNano);
 					}
 					cb(null, layerMtimes);
 				} catch (err: any) {
