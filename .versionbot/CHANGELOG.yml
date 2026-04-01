@@ -1,4 +1,17 @@
 - commits:
+    - subject: Use a `Map` for storing the layer mtimes
+      hash: 47693421c1c4cfafdb74c04c43bdab4a8bdcbea2
+      body: |
+        This should perform better considering the layer mtimes can potentially
+        get fairly large
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+  version: 4.2.3
+  title: ""
+  date: 2026-04-01T16:28:03.869Z
+- commits:
     - subject: Treat already removed images as a noop
       hash: 8737ea0f7b1ceefdef2cee60aa7f7a523832fb6d
       body: ""
