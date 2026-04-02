@@ -6,7 +6,9 @@ import { Stream } from 'node:stream';
 import type { LayerMtimes } from '../build/docker-event-stream';
 import { parseEventStream } from '../build/docker-event-stream';
 import { createTree } from '../build/docker-image-tree';
-import { docker } from './lib/common';
+import { docker, makeContainer, makeImage } from './lib/common';
+
+const FROZEN_DATE = Date.UTC(2016, 0, 1);
 
 const getLayerMtimes = async () => {
 	const streamParsers = await parseEventStream(docker);
@@ -43,7 +45,7 @@ describe('createTree', function () {
 			})
 		).default as ContainerInfo[];
 		const mtimes = await getLayerMtimes();
-		tk.freeze(Date.UTC(2016, 0, 1));
+		tk.freeze(FROZEN_DATE);
 		const tree = createTree(images, containers, mtimes);
 		tk.reset();
 		const output = {
@@ -135,5 +137,110 @@ describe('createTree', function () {
 			},
 		};
 		expect(tree).to.deep.equal(output);
+	});
+
+	describe('mtime resolution', function () {
+		it('should resolve mtime from repoTags when ID key is 0', function () {
+			const recentTime = 1700000000000000000;
+			const images: ImageInfo[] = [
+				makeImage('sha256:img1', '', { tags: ['myapp:latest'] }),
+			];
+			const mtimes: LayerMtimes = new Map<string, string | number>([
+				['sha256:img1', 0], // set by parseEventStream init
+				['myapp:latest', recentTime], // set by container event with from=tag
+			]);
+
+			tk.freeze(FROZEN_DATE);
+			const tree = createTree(images, [], mtimes);
+			tk.reset();
+
+			// Should resolve to the tag-keyed mtime, not the ID-keyed 0
+			expect(tree.children['sha256:img1'].mtime).to.equal(recentTime);
+		});
+
+		it('should resolve mtime from repoDigests when ID key is 0', function () {
+			const recentTime = 1700000000000000000;
+			const digest =
+				'sha256:a8cf7ff6367c2afa2a90acd081b484cbded349a7076e7bdf37a05279f276bc12';
+			const images: ImageInfo[] = [
+				makeImage('sha256:img1', '', { digests: [digest] }),
+			];
+			const mtimes: LayerMtimes = new Map<string, string | number>([
+				['sha256:img1', 0],
+				[digest, recentTime],
+			]);
+
+			tk.freeze(FROZEN_DATE);
+			const tree = createTree(images, [], mtimes);
+			tk.reset();
+
+			expect(tree.children['sha256:img1'].mtime).to.equal(recentTime);
+		});
+
+		it('should prefer most recent mtime when ID and tag are both non-zero', function () {
+			const idTime = 1700000000000000000;
+			const tagTime = 1600000000000000000;
+			const images: ImageInfo[] = [
+				makeImage('sha256:img1', '', { tags: ['myapp:latest'] }),
+			];
+			const mtimes: LayerMtimes = new Map<string, string | number>([
+				['sha256:img1', idTime],
+				['myapp:latest', tagTime],
+			]);
+
+			tk.freeze(FROZEN_DATE);
+			const tree = createTree(images, [], mtimes);
+			tk.reset();
+
+			expect(tree.children['sha256:img1'].mtime).to.equal(idTime);
+		});
+
+		it('should default to now for images not in layerMtimes', function () {
+			const images: ImageInfo[] = [
+				makeImage('sha256:new-image', '', { tags: ['justbuilt:v1'] }),
+			];
+			tk.freeze(FROZEN_DATE);
+			const tree = createTree(images, [], new Map());
+			tk.reset();
+
+			const expectedNow = FROZEN_DATE * 1e6;
+			expect(tree.children['sha256:new-image'].mtime).to.equal(expectedNow);
+		});
+
+		it('should treat mtime=0 as old, not default to current time', function () {
+			const images: ImageInfo[] = [
+				makeImage('sha256:old', '', { tags: ['old:v1'] }),
+			];
+			const mtimes: LayerMtimes = new Map([['sha256:old', 0]]);
+
+			tk.freeze(FROZEN_DATE);
+			const tree = createTree(images, [], mtimes);
+			tk.reset();
+
+			expect(tree.children['sha256:old'].mtime).to.equal(0);
+		});
+	});
+
+	describe('isUsedByAContainer', function () {
+		it('should only check direct ImageID, not ancestor images', function () {
+			// A container's image is protected, but its parent/base is not
+			// directly marked — protection comes from tree structure instead
+			const images: ImageInfo[] = [
+				makeImage('sha256:base', '', { tags: ['ubuntu:20.04'] }),
+				makeImage('sha256:child', 'sha256:base', {
+					tags: ['myapp:v1'],
+				}),
+			];
+			const containers: ContainerInfo[] = [makeContainer('sha256:child')];
+			const mtimes: LayerMtimes = new Map();
+
+			const tree = createTree(images, containers, mtimes);
+
+			const base = tree.children['sha256:base'];
+			const child = base.children['sha256:child'];
+			expect(child.isUsedByAContainer).to.be.true;
+			// Base is NOT directly marked — relies on tree structure for protection
+			expect(base.isUsedByAContainer).to.be.false;
+		});
 	});
 });
