@@ -1,4 +1,20 @@
 - commits:
+    - subject: Persist mtimes across stream restarts
+      hash: 9abe0827e8fd6ff49b9360e1393b54f8b2e34689
+      body: |
+        Pass existing mtimes through on stream restart so known mtimes are
+        preserved, also check for and clean up stale entries. If we don't
+        preserve known mtimes, all image mtimes would be set to 0 making
+        them appear old and cause GC to remove them even if they were
+        recently used.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: joshbwlng
+  version: 4.2.4
+  title: ""
+  date: 2026-04-02T01:07:37.277Z
+- commits:
     - subject: Use a `Map` for storing the layer mtimes
       hash: 47693421c1c4cfafdb74c04c43bdab4a8bdcbea2
       body: |
