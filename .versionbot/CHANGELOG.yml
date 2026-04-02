@@ -1,4 +1,27 @@
 - commits:
+    - subject: Fix tests for containerized cross-platform execution
+      hash: 5ecc8b426587122368894616b7861268649e42cc
+      body: |
+        - Replace alpine:3.1, debian:squeeze, ubuntu:lucid with multi-arch
+          equivalents that work on both arm64 and amd64
+        - Discover NONE_TAG_IMAGES dynamically via a before() hook that
+          resolves digest refs for the current platform, with guards for
+          undefined digests and ID mismatch
+        - Fix afterEach to await cleanup with Promise.all instead of
+          returning a bare array of promises
+        - Add DOCKER_OPTS helper that parses DOCKER_HOST so tests work both
+          locally and in containers
+        - Filter catch blocks to only swallow 404/409, surface real errors
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+  version: 4.2.5
+  title: ""
+  date: 2026-04-02T23:45:15.445Z
+- commits:
     - subject: Persist mtimes across stream restarts
       hash: 9abe0827e8fd6ff49b9360e1393b54f8b2e34689
       body: |
