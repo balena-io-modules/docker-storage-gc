@@ -53,7 +53,7 @@ describe('createTree', function () {
 			size: 0,
 			repoTags: [],
 			repoDigests: [],
-			mtime: 1451606400000000000,
+			mtime: 1451606400,
 			isUsedByAContainer: false,
 			children: {
 				'sha256:6d15899cef812e2876b9d5d43d4cd863eda7b278f7b52d00975f6a9a8e817c74':
@@ -62,7 +62,7 @@ describe('createTree', function () {
 						size: 125151141,
 						repoTags: [],
 						repoDigests: [],
-						mtime: 1451606400000000000,
+						mtime: 1451606400,
 						isUsedByAContainer: false,
 						children: {
 							'sha256:e53bd4df04f86919156c4510cdc6e6c9491ec8ec226381d36aca573b46bbbbbc':
@@ -71,7 +71,7 @@ describe('createTree', function () {
 									size: 0,
 									repoTags: ['project1'],
 									repoDigests: [],
-									mtime: 1451606400000000000,
+									mtime: 1451606400,
 									isUsedByAContainer: false,
 									children: {
 										'sha256:6d41a4a0bf8168363e29da8a5ecbf3cd6c37e3f5a043decd5e7da6e427ba869c':
@@ -80,9 +80,7 @@ describe('createTree', function () {
 												size: 330389,
 												repoTags: ['project2'],
 												repoDigests: [],
-
-												// eslint-disable-next-line no-loss-of-precision
-												mtime: 1448576073085559863,
+												mtime: 1448576073,
 												isUsedByAContainer: false,
 												children: {
 													'sha256:80dc79d29cd8618e678da508fc32f7289e6f72defb534f3f287731b1f8b355ea':
@@ -91,7 +89,7 @@ describe('createTree', function () {
 															size: 98872,
 															repoTags: [],
 															repoDigests: [],
-															mtime: 1451606400000000000,
+															mtime: 1451606400,
 															isUsedByAContainer: false,
 															children: {},
 														},
@@ -107,7 +105,7 @@ describe('createTree', function () {
 						size: 125151141,
 						repoTags: [],
 						repoDigests: [],
-						mtime: 1451606400000000000,
+						mtime: 1451606400,
 						isUsedByAContainer: false,
 						children: {
 							'sha256:9a61b6b1315e6b457c31a03346ab94486a2f5397f4a82219bee01eead1c34c2e':
@@ -116,7 +114,7 @@ describe('createTree', function () {
 									size: 0,
 									repoTags: ['resin/project3'],
 									repoDigests: [],
-									mtime: 1448576073203895800,
+									mtime: 1448576073,
 									isUsedByAContainer: false,
 									children: {},
 								},
@@ -130,7 +128,7 @@ describe('createTree', function () {
 						repoDigests: [
 							'sha256:a8cf7ff6367c2afa2a90acd081b484cbded349a7076e7bdf37a05279f276bc12',
 						],
-						mtime: 1448576072937294800,
+						mtime: 1448576072,
 						isUsedByAContainer: true,
 						children: {},
 					},
@@ -141,11 +139,11 @@ describe('createTree', function () {
 
 	describe('mtime resolution', function () {
 		it('should resolve mtime from repoTags when ID key is 0', function () {
-			const recentTime = 1700000000000000000;
+			const recentTime = 1700000000;
 			const images: ImageInfo[] = [
 				makeImage('sha256:img1', '', { tags: ['myapp:latest'] }),
 			];
-			const mtimes: LayerMtimes = new Map<string, string | number>([
+			const mtimes: LayerMtimes = new Map([
 				['sha256:img1', 0], // set by parseEventStream init
 				['myapp:latest', recentTime], // set by container event with from=tag
 			]);
@@ -159,13 +157,13 @@ describe('createTree', function () {
 		});
 
 		it('should resolve mtime from repoDigests when ID key is 0', function () {
-			const recentTime = 1700000000000000000;
+			const recentTime = 1700000000;
 			const digest =
 				'sha256:a8cf7ff6367c2afa2a90acd081b484cbded349a7076e7bdf37a05279f276bc12';
 			const images: ImageInfo[] = [
 				makeImage('sha256:img1', '', { digests: [digest] }),
 			];
-			const mtimes: LayerMtimes = new Map<string, string | number>([
+			const mtimes: LayerMtimes = new Map([
 				['sha256:img1', 0],
 				[digest, recentTime],
 			]);
@@ -178,12 +176,12 @@ describe('createTree', function () {
 		});
 
 		it('should prefer most recent mtime when ID and tag are both non-zero', function () {
-			const idTime = 1700000000000000000;
-			const tagTime = 1600000000000000000;
+			const idTime = 1700000000;
+			const tagTime = 1600000000;
 			const images: ImageInfo[] = [
 				makeImage('sha256:img1', '', { tags: ['myapp:latest'] }),
 			];
-			const mtimes: LayerMtimes = new Map<string, string | number>([
+			const mtimes: LayerMtimes = new Map([
 				['sha256:img1', idTime],
 				['myapp:latest', tagTime],
 			]);
@@ -203,7 +201,7 @@ describe('createTree', function () {
 			const tree = createTree(images, [], new Map());
 			tk.reset();
 
-			const expectedNow = FROZEN_DATE * 1e6;
+			const expectedNow = Math.floor(FROZEN_DATE / 1000);
 			expect(tree.children['sha256:new-image'].mtime).to.equal(expectedNow);
 		});
 

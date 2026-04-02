@@ -33,11 +33,8 @@ const getMtime = function (tree: ImageNode, layerMtimes: LayerMtimes) {
 	const keys = [tree.id, ...tree.repoTags, ...tree.repoDigests];
 	for (const key of keys) {
 		const val = layerMtimes.get(key);
-		if (val != null) {
-			const num = typeof val === 'string' ? Number(val) : val;
-			if (!Number.isNaN(num) && (max == null || num > max)) {
-				max = num;
-			}
+		if (val != null && (max == null || val > max)) {
+			max = val;
 		}
 	}
 	return max;
@@ -58,7 +55,7 @@ export const createTree = function (
 	containers: Docker.ContainerInfo[],
 	layerMtimes: LayerMtimes,
 ): ImageNode {
-	const now = Date.now() * Math.pow(10, 6); // convert to nanoseconds
+	const now = Math.floor(Date.now() / 1000); // unix seconds, matching Docker event `time` field
 	const usedImageIds = new Set(containers.map((c) => c.ImageID));
 	const tree: {
 		[key: string]: ImageNode;

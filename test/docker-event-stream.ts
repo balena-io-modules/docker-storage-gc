@@ -43,22 +43,26 @@ describe('parseEventStream', function () {
 	});
 
 	it('should return updated mtimes', async () => {
-		const lines = fs
-			.readFileSync(__dirname + '/fixtures/docker-events.json', 'utf8')
+		const lines = (
+			await fs.promises.readFile(
+				__dirname + '/fixtures/docker-events.json',
+				'utf8',
+			)
+		)
 			.trim()
 			.split('\n');
 		const mtimes = await pipeEvents(lines.map((line) => JSON.parse(line)));
-		expect(mtimes.get('busybox:latest')).to.equal(1448576072937294800);
+		expect(mtimes.get('busybox:latest')).to.equal(1448576072);
 		expect(
 			mtimes.get(
 				'sha256:6d41a4a0bf8168363e29da8a5ecbf3cd6c37e3f5a043decd5e7da6e427ba869c',
 			),
-		).to.equal(1448576073085559800);
+		).to.equal(1448576073);
 		expect(
 			mtimes.get(
 				'sha256:9a61b6b1315e6b457c31a03346ab94486a2f5397f4a82219bee01eead1c34c2e',
 			),
-		).to.equal(1448576073203895800);
+		).to.equal(1448576073);
 	});
 });
 
@@ -117,10 +121,9 @@ describe('parseEventStream mtime persistence', function () {
 				id: 'container1',
 				from: 'myapp:latest',
 				time: 1700000000,
-				timeNano: 1700000000000000000,
 			},
 		]);
-		expect(mtimes.get('myapp:latest')).to.equal(1700000000000000000);
+		expect(mtimes.get('myapp:latest')).to.equal(1700000000);
 	});
 
 	it('should store container event mtime under sha256 ID when from is an ID', async () => {
@@ -130,9 +133,8 @@ describe('parseEventStream mtime persistence', function () {
 				id: 'container1',
 				from: 'sha256:abc123def456',
 				time: 1700000000,
-				timeNano: 1700000000000000000,
 			},
 		]);
-		expect(mtimes.get('sha256:abc123def456')).to.equal(1700000000000000000);
+		expect(mtimes.get('sha256:abc123def456')).to.equal(1700000000);
 	});
 });
