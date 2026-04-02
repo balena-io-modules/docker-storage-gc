@@ -1,0 +1,30 @@
+services:
+  sut:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npx mocha --exit --require ts-node/register/transpile-only test/*.ts
+    environment:
+      # Use the tcp socket to connect to the dockerd container for compose tests
+      - DOCKER_HOST=tcp://docker:2375
+    depends_on:
+      docker:
+        condition: service_healthy
+
+  docker:
+    image: docker:24.0.5-dind
+    environment:
+      - DOCKER_TLS_CERTDIR=
+    tmpfs:
+      - /var/lib/docker
+      - /var/run
+    # Expose the socket to the host for 'npm test' without a container wrapper
+    ports:
+      - "127.0.0.1:12375:2375"
+    privileged: true
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s

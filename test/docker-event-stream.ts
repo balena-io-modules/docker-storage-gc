@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import fs from 'fs';
 import { Stream } from 'node:stream';
 import { parseEventStream } from '../build/docker-event-stream';
-import { getDocker } from '../build/docker';
+import { docker } from './lib/common';
 
 import fixtureImages from './fixtures/docker-images.json';
 
@@ -18,7 +18,6 @@ describe('parseEventStream', function () {
 	});
 
 	it('should return updated mtimes', async () => {
-		const docker = getDocker({});
 		const streamParsers = await parseEventStream(docker);
 
 		let mtimes: LayerMtimes;

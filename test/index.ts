@@ -1,17 +1,20 @@
 import type Docker from 'dockerode';
 import { expect } from 'chai';
 import DockerGC from '../build/index';
-import { getDocker } from '../build/docker';
+import { DOCKER_OPTS, docker } from './lib/common';
 
 const SKIP_GC_TEST = process.env.SKIP_GC_TEST === '1' || false;
-const IMAGES = ['alpine:3.1', 'debian:squeeze', 'ubuntu:lucid'];
+const IMAGES = ['alpine:3.18', 'debian:bookworm-slim', 'ubuntu:22.04'];
 
-// TODO: Move it to a proper repo
-// Same image (same id), different repo, different digest
-const NONE_TAG_IMAGES = [
-	'hello-world@sha256:8e3114318a995a1ee497790535e7b88365222a21771ae7e53687ad76563e8e76',
-	'balenaplayground/hello-world@sha256:90659bf80b44ce6be8234e6ff90a1ac34acbeb826903b02cfa0da11c82cbc042',
-];
+// Per-platform manifest digests shared by hello-world and <arch>/hello-world.
+// These are content-addressed and immutable — if they stop resolving to the
+// same image ID, something fundamental changed upstream and the test should fail.
+const NONE_TAG_DIGESTS: Record<string, string> = {
+	amd64:
+		'sha256:d1a8d0a4eeb63aff09f5f34d4d80505e0ba81905f36158cc3970d8e07179e59e',
+	arm64:
+		'sha256:5099b89d7666cc2186cad769ddc262ddc7c335b33f5fe79f9ffe50a01282b23e',
+};
 
 const promiseToBool = async (p: Promise<unknown>): Promise<boolean> => {
 	try {
@@ -22,9 +25,9 @@ const promiseToBool = async (p: Promise<unknown>): Promise<boolean> => {
 	}
 };
 
-const pullAsync = async function (docker: Docker, tag: string) {
+const pullAsync = async function (d: Docker, tag: string) {
 	console.log(`[TEST] Pulling ${tag}`);
-	const stream = await docker.pull(tag);
+	const stream = await d.pull(tag);
 	return await new Promise(function (resolve, reject) {
 		stream.resume();
 		stream.once('error', reject);
@@ -32,33 +35,69 @@ const pullAsync = async function (docker: Docker, tag: string) {
 	});
 };
 
+const removeAsync = async function (d: Docker, images: string[]) {
+	await Promise.all(
+		images.map(async (image) => {
+			try {
+				await d.getImage(image).remove({ force: true });
+			} catch (err: any) {
+				if (err.statusCode !== 404 && err.statusCode !== 409) {
+					throw err;
+				}
+			}
+		}),
+	);
+};
+
 // This test case is a little weird, it requires that no other images are present on
 // the system to ensure that the correct one is being removed. Because of this, you
 // can use the SKIP_GC_TEST env var to inform the test suite not to run this test
 describe('Garbage collection', function () {
 	let dockerStorage: DockerGC;
-	let docker: Docker;
+
+	let NONE_TAG_IMAGES: string[];
+
+	before(async function () {
+		this.timeout(120000);
+
+		const { Arch } = await docker.version();
+		const digest = NONE_TAG_DIGESTS[Arch];
+		if (digest == null) {
+			throw new Error(`No known hello-world digest for architecture: ${Arch}`);
+		}
+
+		const archRepo =
+			Arch === 'arm64' ? 'arm64v8' : Arch === 'amd64' ? 'amd64' : Arch;
+		NONE_TAG_IMAGES = [
+			`hello-world@${digest}`,
+			`${archRepo}/hello-world@${digest}`,
+		];
+
+		// Pull both refs and verify they resolve to the same image ID
+		await pullAsync(docker, NONE_TAG_IMAGES[0]);
+		await pullAsync(docker, NONE_TAG_IMAGES[1]);
+		const hwInspect = await docker.getImage(NONE_TAG_IMAGES[0]).inspect();
+		const archInspect = await docker.getImage(NONE_TAG_IMAGES[1]).inspect();
+
+		if (hwInspect.Id !== archInspect.Id) {
+			throw new Error(
+				`hello-world and ${archRepo}/hello-world have different image IDs: ` +
+					`${hwInspect.Id} !== ${archInspect.Id}`,
+			);
+		}
+
+		// Clean up tag-pulled images so tests start fresh
+		await removeAsync(docker, NONE_TAG_IMAGES);
+	});
+
 	beforeEach(async function () {
 		dockerStorage = new DockerGC();
-		// Use either local or CI docker
-		docker = getDocker({
-			socketPath: '/tmp/dind/docker.sock',
-		});
-		await dockerStorage.setDocker({
-			socketPath: '/tmp/dind/docker.sock',
-		});
+		await dockerStorage.setDocker(DOCKER_OPTS);
 		await dockerStorage.setupMtimeStream();
 	});
 
-	afterEach(function () {
-		console.log('[afterEach] Cleaning up...');
-		return IMAGES.concat(NONE_TAG_IMAGES).map(async (image) => {
-			try {
-				return await docker.getImage(image).remove();
-			} catch {
-				// ignore
-			}
-		});
+	afterEach(async function () {
+		await removeAsync(docker, IMAGES.concat(NONE_TAG_IMAGES));
 	});
 
 	it('should remove a image by tag', async function () {
