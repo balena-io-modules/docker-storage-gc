@@ -26,7 +26,7 @@ const CONTAINER_EVENTS = [
 	'unpause',
 ];
 
-export type LayerMtimes = Map<string, string | number | undefined>;
+export type LayerMtimes = Map<string, number>;
 
 interface DockerEvent {
 	status: string;
@@ -89,15 +89,15 @@ export const parseEventStream = async (
 			objectMode: true,
 			transform(evt: DockerEvent, _encoding, cb) {
 				try {
-					const { status, id, from, timeNano } = evt;
+					const { status, id, from, time } = evt;
 					if (IMAGE_EVENTS.includes(status)) {
 						if (status === 'delete') {
 							layerMtimes.delete(id);
 						} else {
-							layerMtimes.set(id, timeNano);
+							layerMtimes.set(id, time);
 						}
 					} else if (CONTAINER_EVENTS.includes(status)) {
-						layerMtimes.set(from, timeNano);
+						layerMtimes.set(from, time);
 					}
 					cb(null, layerMtimes);
 				} catch (err: any) {

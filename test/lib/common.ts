@@ -1,4 +1,5 @@
 import type Docker from 'dockerode';
+import type { ContainerInfo, ImageInfo } from 'dockerode';
 import { getDocker } from '../../build/docker';
 
 function parseDockerHost(): Docker.DockerOptions {
@@ -16,3 +17,23 @@ function parseDockerHost(): Docker.DockerOptions {
 export const DOCKER_OPTS = parseDockerHost();
 
 export const docker = getDocker(DOCKER_OPTS);
+
+export const makeImage = (
+	id: string,
+	parentId: string,
+	opts: { tags?: string[]; digests?: string[]; size?: number } = {},
+): ImageInfo => ({
+	Id: id,
+	ParentId: parentId,
+	RepoTags: opts.tags ?? ['<none>:<none>'],
+	RepoDigests: opts.digests ?? ['<none>@<none>'],
+	Size: opts.size ?? 100000,
+	VirtualSize: opts.size ?? 100000,
+	SharedSize: 0,
+	Containers: 0,
+	Created: 0,
+	Labels: {},
+});
+
+export const makeContainer = (imageId: string): ContainerInfo =>
+	({ ImageID: imageId }) as unknown as ContainerInfo;

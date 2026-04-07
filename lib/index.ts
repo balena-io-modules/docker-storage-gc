@@ -82,6 +82,7 @@ const getImagesToRemove = function (
 			break;
 		}
 		const leaf = leafs.pop()!;
+		leaf.removed = true;
 		if (leaf !== tree) {
 			// don't remove the tree root
 			result.push(leaf);
@@ -92,7 +93,6 @@ const getImagesToRemove = function (
 				resort();
 			}
 		}
-		leaf.removed = true;
 	}
 
 	metrics.emit('numberImagesToRemove', result.length);

@@ -25,9 +25,17 @@ const promiseToBool = async (p: Promise<unknown>): Promise<boolean> => {
 	}
 };
 
+const registryAuth =
+	process.env.DOCKERHUB_USER && process.env.DOCKERHUB_TOKEN
+		? {
+				username: process.env.DOCKERHUB_USER,
+				password: process.env.DOCKERHUB_TOKEN,
+			}
+		: undefined;
+
 const pullAsync = async function (d: Docker, tag: string) {
 	console.log(`[TEST] Pulling ${tag}`);
-	const stream = await d.pull(tag);
+	const stream = await d.pull(tag, { authconfig: registryAuth });
 	return await new Promise(function (resolve, reject) {
 		stream.resume();
 		stream.once('error', reject);
@@ -222,6 +230,58 @@ describe('Garbage collection', function () {
 			expect(imageInspect).to.be.true;
 		} finally {
 			await docker.getContainer(containerName).stop();
+		}
+	});
+
+	it('should not delete an image created by tag when mtime was recorded under tag key', async function () {
+		if (SKIP_GC_TEST) {
+			return;
+		}
+		this.timeout(600000);
+		const containerName = 'tag-mtime-test';
+
+		// Pull the target image, then create a FRESH DockerGC instance.
+		// The fresh instance has empty currentMtimes, so setupMtimeStream
+		// calls parseEventStream which sees alpine already present and
+		// initializes its ID key to mtime=0 ("known but old").
+		await pullAsync(docker, IMAGES[0]);
+		dockerStorage.destroyMtimeStream();
+		dockerStorage = new DockerGC();
+		await dockerStorage.setDocker(DOCKER_OPTS);
+		await dockerStorage.setupMtimeStream();
+
+		// Pull the sacrificial image first — its pull event gives it an
+		// ID-keyed mtime that is older than the container events below.
+		try {
+			await pullAsync(docker, IMAGES[1]);
+
+			// Create+destroy a container from target by TAG. The container
+			// events store mtime under the tag key ("alpine:3.18"), NOT
+			// the sha256 ID key. Without the getMtime fix, the ID key (0)
+			// shadows the tag key and the image appears stale.
+			const container = await docker.createContainer({
+				Image: IMAGES[0],
+				Cmd: ['true'],
+				name: containerName,
+			});
+			await container.start();
+			await container.wait();
+			await container.remove();
+
+			await dockerStorage.garbageCollect(1);
+
+			// Without fix: target mtime resolves to 0 (ID key) → deleted
+			// With fix: target mtime resolves to container destroy time (tag key) → survives
+			const targetImageExists = await promiseToBool(
+				docker.getImage(IMAGES[0]).inspect(),
+			);
+			expect(targetImageExists).to.be.true;
+		} finally {
+			try {
+				await docker.getContainer(containerName).remove({ force: true });
+			} catch {
+				// ignore
+			}
 		}
 	});
 

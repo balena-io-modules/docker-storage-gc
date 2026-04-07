@@ -24,21 +24,20 @@ export const createNode = (id: string): ImageNode => ({
 	children: {},
 });
 
-const getMtimeFrom = function (layerMtimes: LayerMtimes, attributes: string[]) {
-	for (const key of attributes) {
-		const mtime = layerMtimes.get(key);
-		if (mtime != null) {
-			return mtime;
+const getMtime = function (tree: ImageNode, layerMtimes: LayerMtimes) {
+	// Collect mtime candidates from all possible keys (ID, tags, digests).
+	// Container events store mtime under the `from` field which may be a tag,
+	// while stream init stores 0 under the sha256 ID. We need the most recent
+	// value across all keys to avoid treating a recently-used image as stale.
+	let max: number | undefined;
+	const keys = [tree.id, ...tree.repoTags, ...tree.repoDigests];
+	for (const key of keys) {
+		const val = layerMtimes.get(key);
+		if (val != null && (max == null || val > max)) {
+			max = val;
 		}
 	}
-};
-
-const getMtime = function (tree: ImageNode, layerMtimes: LayerMtimes) {
-	return (
-		layerMtimes.get(tree.id) ??
-		getMtimeFrom(layerMtimes, tree.repoTags) ??
-		getMtimeFrom(layerMtimes, tree.repoDigests)
-	);
+	return max;
 };
 
 export interface ImageNode {
@@ -56,7 +55,7 @@ export const createTree = function (
 	containers: Docker.ContainerInfo[],
 	layerMtimes: LayerMtimes,
 ): ImageNode {
-	const now = Date.now() * Math.pow(10, 6); // convert to nanoseconds
+	const now = Math.floor(Date.now() / 1000); // unix seconds, matching Docker event `time` field
 	const usedImageIds = new Set(containers.map((c) => c.ImageID));
 	const tree: {
 		[key: string]: ImageNode;
