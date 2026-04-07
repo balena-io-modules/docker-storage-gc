@@ -1,4 +1,52 @@
 - commits:
+    - subject: Switch mtime tracking from timeNano to time (seconds)
+      hash: 5fae42375f4c756571726934f890c98f526d4615
+      body: |
+        timeNano values exceed Number.MAX_SAFE_INTEGER, causing precision
+        loss when converted to JavaScript numbers. The event stream now
+        reads the `time` field (unix seconds) which fits safely in a JS
+        number. This eliminates mixed string/number comparisons throughout
+        the mtime tracking and sorting pipeline.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+    - subject: Fix cascading deletion ordering in getImagesToRemove
+      hash: 3fd35ea58ca217ba9b3890b56ad5e1fe0c3d0330
+      body: |
+        Move leaf.removed=true before the parent candidate check so parent
+        nodes correctly see their child as removed and cascade within a
+        single GC run instead of requiring multiple runs.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+    - subject: Fix getMtime resolution across ID and tag keys
+      hash: 998c4a2cbe38f692724c03d6b46efb3bd00e1753
+      body: |
+        getMtime used nullish coalescing (??) to fall through from ID to tag
+        to digest lookup. But parseEventStream initializes all image IDs to
+        mtime=0, and 0 is not nullish. Container events with from=tag store
+        mtime under the tag key, but getMtime found 0 under the ID key first
+        and returned it — silently discarding the more recent tag-keyed value.
+
+        Fix by collecting mtime candidates from all keys (ID, tags, digests)
+        and returning the maximum (most recent) value. This ensures container
+        events recorded under any key format are correctly reflected.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+  version: 4.2.6
+  title: ""
+  date: 2026-04-07T13:19:52.886Z
+- commits:
     - subject: Fix tests for containerized cross-platform execution
       hash: 5ecc8b426587122368894616b7861268649e42cc
       body: |
