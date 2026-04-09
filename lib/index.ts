@@ -183,6 +183,15 @@ export default class DockerGC {
 		});
 	}
 
+	// Refresh the mtime of one or more image references (tag, digest, or ID)
+	// so they are not treated as stale by the next GC run.
+	public markUsed(...refs: string[]): void {
+		const now = Math.floor(Date.now() / 1000);
+		for (const ref of refs) {
+			this.currentMtimes.set(ref, now);
+		}
+	}
+
 	public destroyMtimeStream(): void {
 		if (this.mtimeStream != null) {
 			this.mtimeStream.removeAllListeners();

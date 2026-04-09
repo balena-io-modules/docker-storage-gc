@@ -285,6 +285,31 @@ describe('Garbage collection', function () {
 		}
 	});
 
+	it('should protect a marked-used image from GC', async function () {
+		this.timeout(600000);
+		if (SKIP_GC_TEST) {
+			return;
+		}
+
+		// Pull two images so GC has something to remove
+		await Promise.all([
+			pullAsync(docker, IMAGES[0]),
+			pullAsync(docker, IMAGES[1]),
+		]);
+
+		// Mark one of them as used and run GC
+		dockerStorage.markUsed(IMAGES[0]);
+		await dockerStorage.garbageCollect(1);
+
+		// Assert the marked image was not removed
+		const [markedExists, unmarkedExists] = await Promise.all([
+			promiseToBool(docker.getImage(IMAGES[0]).inspect()),
+			promiseToBool(docker.getImage(IMAGES[1]).inspect()),
+		]);
+		expect(markedExists).to.be.true;
+		expect(unmarkedExists).to.be.false;
+	});
+
 	it('should get daemon host disk usage', async function () {
 		this.timeout(600000);
 		const du = await dockerStorage.getDaemonFreeSpace();
