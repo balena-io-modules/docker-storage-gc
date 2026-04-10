@@ -1,4 +1,16 @@
 - commits:
+    - subject: Update docker Docker tag to v24.0.9
+      hash: 8acf2f20e820c69530db4f4e96d92a61c6883b18
+      body: |
+        Update docker from 24.0.5 to 24.0.9
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+  version: 4.2.10
+  title: ""
+  date: 2026-04-10T15:11:40.105Z
+- commits:
     - subject: Treat 409 conflict errors as noop during image removal
       hash: 4fe66707807a4cab64cd3dde9ed67d1788dbf9c4
       body: |
