@@ -1,4 +1,16 @@
 - commits:
+    - subject: Update dependency typescript to v6
+      hash: 0050bda22bf2f95159ed7862a3b8d8c4a79860d4
+      body: |
+        Update typescript from 5.9.3 to 6.0.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+  version: 4.2.8
+  title: ""
+  date: 2026-04-10T13:46:20.080Z
+- commits:
     - subject: Add info about the size and mtime of images being removed
       hash: 0e2677170713319d1b67075237c30c0174f99475
       body: ""
