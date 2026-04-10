@@ -229,6 +229,12 @@ export default class DockerGC {
 							);
 							continue;
 						}
+						if (e.statusCode === 409) {
+							console.log(
+								`[GC (${this.host}] Image has dependent children, skipping: ${attribute} (id: ${image.id})`,
+							);
+							continue;
+						}
 						throw e;
 					}
 					this.metrics.emit('imageRemoved', removalType);
