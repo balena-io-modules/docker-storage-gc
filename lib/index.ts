@@ -218,7 +218,7 @@ export default class DockerGC {
 			return (async () => {
 				for (const attribute of attributes) {
 					console.log(
-						`[GC (${this.host}] Removing image : ${attribute} (id: ${image.id})`,
+						`[GC (${this.host}] Removing image : ${attribute} (id: ${image.id}, size: ${image.size}, mtime: ${image.mtime})`,
 					);
 					try {
 						await this.docker.getImage(attribute).remove({ noprune: true });
