@@ -37,7 +37,7 @@
     "mocha": "^11.7.4",
     "timekeeper": "^2.3.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.0"
   },
   "versionist": {
     "publishedAt": "2026-04-10T10:14:22.779Z"
