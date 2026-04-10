@@ -1,4 +1,23 @@
 - commits:
+    - subject: Treat 409 conflict errors as noop during image removal
+      hash: 4fe66707807a4cab64cd3dde9ed67d1788dbf9c4
+      body: |
+        When the engine refuses to delete an image due to dependent child
+        images (409 conflict), skip it instead of treating it as an error.
+        The image tree built from ParentId doesn't capture layer-level
+        dependencies, so GC can select images that the engine considers
+        non-removable. Without this fix, 409 errors accumulate and GC
+        reports failure despite having valid images to reclaim.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+  version: 4.2.9
+  title: ""
+  date: 2026-04-10T14:56:01.312Z
+- commits:
     - subject: Update dependency typescript to v6
       hash: 0050bda22bf2f95159ed7862a3b8d8c4a79860d4
       body: |
