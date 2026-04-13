@@ -86,7 +86,9 @@ const getImagesToRemove = function (
 		if (leaf !== tree) {
 			// don't remove the tree root
 			result.push(leaf);
-			size += leaf.size;
+			// The removed size is the size the leaf itself contributes minus any contribution from it's parent(s), so we subtract those.
+			// They should be removed immediately after due to be being pushed as the next leaf to remove (assuming it's a valid candidate)
+			size += Math.max(0, leaf.size - (leaf.parent?.size ?? 0));
 			if (leaf.parent != null && isCandidateForRemoval(leaf.parent)) {
 				// If the parent is now a candidate for deletion then add to the potential leafs and resort them
 				leafs.push(leaf.parent);
