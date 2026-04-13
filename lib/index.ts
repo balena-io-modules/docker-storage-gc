@@ -68,6 +68,7 @@ const getImagesToRemove = function (
 	// Removes the oldest, largest leafs first.
 	// This should avoid trying to remove images with children.
 	const result = [];
+	const removedIds = new Set<string>();
 	let size = 0;
 	const leafs = getUnusedTreeLeafs(tree);
 	const resort = () => {
@@ -86,7 +87,11 @@ const getImagesToRemove = function (
 		if (leaf !== tree) {
 			// don't remove the tree root
 			result.push(leaf);
-			size += leaf.size;
+			if (!removedIds.has(leaf.id)) {
+				// Only count the size of an image once, even if it appears multiple times in the tree (due to multiple tags/digests)
+				size += leaf.size;
+				removedIds.add(leaf.id);
+			}
 			if (leaf.parent != null && isCandidateForRemoval(leaf.parent)) {
 				// If the parent is now a candidate for deletion then add to the potential leafs and resort them
 				leafs.push(leaf.parent);
