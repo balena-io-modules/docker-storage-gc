@@ -21,7 +21,12 @@ export const docker = getDocker(DOCKER_OPTS);
 export const makeImage = (
 	id: string,
 	parentId: string,
-	opts: { tags?: string[]; digests?: string[]; size?: number } = {},
+	opts: {
+		tags?: string[];
+		digests?: string[];
+		size?: number;
+		sharedSize?: number;
+	} = {},
 ): ImageInfo => ({
 	Id: id,
 	ParentId: parentId,
@@ -29,7 +34,7 @@ export const makeImage = (
 	RepoDigests: opts.digests ?? ['<none>@<none>'],
 	Size: opts.size ?? 100000,
 	VirtualSize: opts.size ?? 100000,
-	SharedSize: 0,
+	SharedSize: opts.sharedSize ?? 0,
 	Containers: 0,
 	Created: 0,
 	Labels: {},

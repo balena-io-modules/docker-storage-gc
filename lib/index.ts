@@ -54,7 +54,10 @@ const sortBy = <T extends object>(key: keyof T): ((a: T, b: T) => number) => {
 	return (a, b) => (a[key] > b[key] ? 1 : b[key] > a[key] ? -1 : 0);
 };
 const mtimeSort = sortBy('mtime');
-const sizeSort = sortBy('size');
+// Sort by the reclaimable (unique) bytes of each image, not the full chain
+// size. Prioritising full chain size would pop images whose removal frees
+// almost nothing because all their layers are shared with other images.
+const uniqueSizeSort = sortBy('uniqueSize');
 
 /**
  * This will mutate the passed in tree, marking the images to be removed as removed.
@@ -72,8 +75,9 @@ const getImagesToRemove = function (
 	const leafs = getUnusedTreeLeafs(tree);
 	const resort = () => {
 		leafs.sort((a, b) => {
-			// mtime desc, size asc
-			return -mtimeSort(a, b) || sizeSort(a, b);
+			// mtime desc, unique-size asc — pop() removes from the end, so
+			// oldest+largest-unique gets evicted first.
+			return -mtimeSort(a, b) || uniqueSizeSort(a, b);
 		});
 	};
 	resort();
@@ -86,7 +90,15 @@ const getImagesToRemove = function (
 		if (leaf !== tree) {
 			// don't remove the tree root
 			result.push(leaf);
-			size += leaf.size;
+			// Credit only the layers unique to this image. The engine reports
+			// `size` as the sum of every layer in the image's chain, including
+			// layers shared with other images on disk. Summing raw `size`
+			// across removals over-counts shared layers and makes GC think it
+			// reclaimed far more than it did. `size - sharedSize` is a
+			// conservative floor on the actual reclaim; if cascading removals
+			// also drop the last reference to a shared layer, the extra
+			// reclaim is accounted for when that image is popped in turn.
+			size += leaf.uniqueSize;
 			if (leaf.parent != null && isCandidateForRemoval(leaf.parent)) {
 				// If the parent is now a candidate for deletion then add to the potential leafs and resort them
 				leafs.push(leaf.parent);
@@ -218,7 +230,7 @@ export default class DockerGC {
 			return (async () => {
 				for (const attribute of attributes) {
 					console.log(
-						`[GC (${this.host}] Removing image : ${attribute} (id: ${image.id}, size: ${image.size}, mtime: ${image.mtime})`,
+						`[GC (${this.host}] Removing image : ${attribute} (id: ${image.id}, size: ${image.size}, sharedSize: ${image.sharedSize}, mtime: ${image.mtime})`,
 					);
 					try {
 						await this.docker.getImage(attribute).remove({ noprune: true });
