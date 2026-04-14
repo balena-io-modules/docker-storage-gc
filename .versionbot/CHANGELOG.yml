@@ -1,4 +1,45 @@
 - commits:
+    - subject: Use Size - SharedSize for reclaim accounting
+      hash: 03d80a0ae070df88829ed764f1a8f72f2ab39544
+      body: |
+        The Docker engine reports ImageInfo.Size as the sum of every layer in an
+        image's chain, including layers shared with other images. When a shared
+        base layer is 500MB and 100 images reference it, getImagesToRemove's
+        `size += leaf.size` accumulator counts that 500MB a hundred times while
+        removing any one image frees zero bytes of that layer.
+
+        On a production builder worker we observed:
+
+            count           = 51,836 images
+            Size total      = 33.84 TB  (what GC sees today)
+            SharedSize      = 33.08 TB  (97.8% shared)
+            Size - Shared   = 0.755 TB
+            engine deduped  = 2.245 TB  (per `system df`)
+
+        GC was over-counting its per-image credit by ~15x vs actual on-disk
+        usage, causing it to declare reclaim targets satisfied after removing
+        only a fraction of the intended bytes. Combined with 409 conflicts on
+        shared-layer images, this drives repeated GC runs that eventually reach
+        newer images and produce 404 errors in concurrent builds.
+
+        Request SharedSize from the engine via `shared-size=1` on listImages
+        and credit `size - sharedSize` per removal. This is a conservative
+        floor — cascading removals that free formerly-shared layers get their
+        additional reclaim accounted for when the next image is popped.
+
+        Older engines that don't implement shared-size return -1; we treat that
+        as 0 so the accumulator falls back to full-chain size (pre-change
+        behaviour) rather than silently under-counting.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+  version: 4.2.11
+  title: ""
+  date: 2026-04-14T14:03:36.797Z
+- commits:
     - subject: Update docker Docker tag to v24.0.9
       hash: 8acf2f20e820c69530db4f4e96d92a61c6883b18
       body: |
