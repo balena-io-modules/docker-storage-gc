@@ -51,6 +51,8 @@ describe('createTree', function () {
 		const output = {
 			id: '0000000000000000000000000000000000000000000000000000000000000000',
 			size: 0,
+			sharedSize: 0,
+			uniqueSize: 0,
 			repoTags: [],
 			repoDigests: [],
 			mtime: 1451606400,
@@ -60,6 +62,8 @@ describe('createTree', function () {
 					{
 						id: 'sha256:6d15899cef812e2876b9d5d43d4cd863eda7b278f7b52d00975f6a9a8e817c74',
 						size: 125151141,
+						sharedSize: 0,
+						uniqueSize: 125151141,
 						repoTags: [],
 						repoDigests: [],
 						mtime: 1451606400,
@@ -69,6 +73,8 @@ describe('createTree', function () {
 								{
 									id: 'sha256:e53bd4df04f86919156c4510cdc6e6c9491ec8ec226381d36aca573b46bbbbbc',
 									size: 0,
+									sharedSize: 0,
+									uniqueSize: 0,
 									repoTags: ['project1'],
 									repoDigests: [],
 									mtime: 1451606400,
@@ -78,6 +84,8 @@ describe('createTree', function () {
 											{
 												id: 'sha256:6d41a4a0bf8168363e29da8a5ecbf3cd6c37e3f5a043decd5e7da6e427ba869c',
 												size: 330389,
+												sharedSize: 0,
+												uniqueSize: 330389,
 												repoTags: ['project2'],
 												repoDigests: [],
 												mtime: 1448576073,
@@ -87,6 +95,8 @@ describe('createTree', function () {
 														{
 															id: 'sha256:80dc79d29cd8618e678da508fc32f7289e6f72defb534f3f287731b1f8b355ea',
 															size: 98872,
+															sharedSize: 0,
+															uniqueSize: 98872,
 															repoTags: [],
 															repoDigests: [],
 															mtime: 1451606400,
@@ -103,6 +113,8 @@ describe('createTree', function () {
 					{
 						id: 'sha256:902b87aaaec929e80541486828959f14fa061f529ad7f37ab300d4ef9f3a0dbf',
 						size: 125151141,
+						sharedSize: 0,
+						uniqueSize: 125151141,
 						repoTags: [],
 						repoDigests: [],
 						mtime: 1451606400,
@@ -112,6 +124,8 @@ describe('createTree', function () {
 								{
 									id: 'sha256:9a61b6b1315e6b457c31a03346ab94486a2f5397f4a82219bee01eead1c34c2e',
 									size: 0,
+									sharedSize: 0,
+									uniqueSize: 0,
 									repoTags: ['resin/project3'],
 									repoDigests: [],
 									mtime: 1448576073,
@@ -124,6 +138,8 @@ describe('createTree', function () {
 					{
 						id: 'sha256:5b0d59026729b68570d99bc4f3f7c31a2e4f2a5736435641565d93e7c25bd2c3',
 						size: 125151141,
+						sharedSize: 0,
+						uniqueSize: 125151141,
 						repoTags: ['busybox:latest'],
 						repoDigests: [
 							'sha256:a8cf7ff6367c2afa2a90acd081b484cbded349a7076e7bdf37a05279f276bc12',
@@ -216,6 +232,75 @@ describe('createTree', function () {
 			tk.reset();
 
 			expect(tree.children['sha256:old'].mtime).to.equal(0);
+		});
+	});
+
+	describe('sharedSize and uniqueSize', function () {
+		it('should compute uniqueSize from SharedSize', function () {
+			const images: ImageInfo[] = [
+				makeImage('sha256:img1', '', {
+					tags: ['app:latest'],
+					size: 500000,
+					sharedSize: 400000,
+				}),
+			];
+			tk.freeze(FROZEN_DATE);
+			const tree = createTree(images, [], new Map());
+			tk.reset();
+
+			const node = tree.children['sha256:img1'];
+			expect(node.size).to.equal(500000);
+			expect(node.sharedSize).to.equal(400000);
+			expect(node.uniqueSize).to.equal(100000);
+		});
+
+		it('should treat negative SharedSize as 0', function () {
+			const images: ImageInfo[] = [
+				makeImage('sha256:img1', '', {
+					tags: ['app:latest'],
+					size: 500000,
+					sharedSize: -1,
+				}),
+			];
+			tk.freeze(FROZEN_DATE);
+			const tree = createTree(images, [], new Map());
+			tk.reset();
+
+			const node = tree.children['sha256:img1'];
+			expect(node.sharedSize).to.equal(0);
+			expect(node.uniqueSize).to.equal(500000);
+		});
+
+		it('should default SharedSize 0 when not provided', function () {
+			const images: ImageInfo[] = [
+				makeImage('sha256:img1', '', {
+					tags: ['app:latest'],
+					size: 300000,
+				}),
+			];
+			tk.freeze(FROZEN_DATE);
+			const tree = createTree(images, [], new Map());
+			tk.reset();
+
+			const node = tree.children['sha256:img1'];
+			expect(node.sharedSize).to.equal(0);
+			expect(node.uniqueSize).to.equal(300000);
+		});
+
+		it('should clamp uniqueSize to 0 when sharedSize exceeds size', function () {
+			const images: ImageInfo[] = [
+				makeImage('sha256:img1', '', {
+					tags: ['app:latest'],
+					size: 100000,
+					sharedSize: 200000,
+				}),
+			];
+			tk.freeze(FROZEN_DATE);
+			const tree = createTree(images, [], new Map());
+			tk.reset();
+
+			const node = tree.children['sha256:img1'];
+			expect(node.uniqueSize).to.equal(0);
 		});
 	});
 
