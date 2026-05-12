@@ -12,7 +12,7 @@ services:
         condition: service_healthy
 
   docker:
-    image: docker:24.0.9-dind
+    image: docker:25.0.5-dind@sha256:b41d0183012e2334aacd4e0b8e339b89246c4fdb7eada6cc86b0355f41328549
     environment:
       - DOCKER_TLS_CERTDIR=
     tmpfs:
