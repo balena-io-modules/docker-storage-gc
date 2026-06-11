@@ -1,4 +1,16 @@
 - commits:
+    - subject: Update dependency chai to v5
+      hash: e9e3233ccc125dbf3a4aa3e0582e580fcb75390b
+      body: |
+        Update chai from 4.5.0 to 5.3.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+  version: 4.2.13
+  title: ""
+  date: 2026-06-11T03:17:50.812Z
+- commits:
     - subject: Update docker Docker tag to v25
       hash: aa8197e08e2c572642ae3fce40df68dc89f88a3b
       body: |
