@@ -1,4 +1,16 @@
 - commits:
+    - subject: Update docker Docker tag to v25
+      hash: aa8197e08e2c572642ae3fce40df68dc89f88a3b
+      body: |
+        Update docker from 24.0.9 to 25.0.5
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+  version: 4.2.12
+  title: ""
+  date: 2026-06-11T01:38:11.110Z
+- commits:
     - subject: Use Size - SharedSize for reclaim accounting
       hash: 03d80a0ae070df88829ed764f1a8f72f2ab39544
       body: |
