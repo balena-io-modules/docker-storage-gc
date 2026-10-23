@@ -1,4 +1,16 @@
 - commits:
+    - subject: Update dependency flowzonify to v0.4.22
+      hash: 74c831477934340b16191039814af7fc12754ec5
+      body: |
+        Update flowzonify from 0.0.0 to 0.4.22
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+  version: 4.2.14
+  title: ""
+  date: 2026-10-23T00:01:05.732Z
+- commits:
     - subject: Update dependency chai to v5
       hash: e9e3233ccc125dbf3a4aa3e0582e580fcb75390b
       body: |
