@@ -122,6 +122,9 @@ const streamToString = (stream: NodeJS.ReadableStream) =>
 			});
 	});
 
+// A multi-arch image, so that the daemon pulls the variant for its own platform
+const BASE_IMAGE = 'alpine:3.23';
+
 const recordGcRunTime = function (
 	t0: ReturnType<NodeJS.HRTime>,
 	metrics: Metrics,
@@ -137,7 +140,6 @@ export default class DockerGC {
 	private docker: Docker;
 	private dockerProgress: DockerProgress;
 	private currentMtimes: LayerMtimes = new Map();
-	private baseImagePromise: Promise<string>;
 	private mtimeStream: Transform | undefined;
 
 	public setHostname(hostname: string): void {
@@ -150,21 +152,9 @@ export default class DockerGC {
 			docker: new Docker(hostObj),
 		});
 		const docker = getDocker(hostObj);
-		// Docker info can take a while so do it here,
-		// and don't wait on the results
 		this.docker = docker;
-		await (this.baseImagePromise = this.getDaemonArchitecture().then((arch) => {
-			switch (arch) {
-				case 'arm':
-					return 'arm32v6/alpine:3.6';
-				case 'arm64':
-					return 'arm64v8/alpine:3.6';
-				case 'amd64':
-					return 'alpine:3.6';
-				default:
-					throw new Error('Could not detect architecture of remote host');
-			}
-		}));
+		// Check that we can connect to the daemon
+		await docker.ping();
 	}
 
 	public minDelayMs = 1000;
@@ -307,14 +297,12 @@ export default class DockerGC {
 		total: number;
 		free: number;
 	}> {
-		const baseImage = await this.baseImagePromise;
-
 		// Ensure the image is available (if it is this is essentially a no-op)
-		await this.dockerProgress.pull(baseImage, () => {
+		await this.dockerProgress.pull(BASE_IMAGE, () => {
 			// noop
 		});
 
-		const spaceStr = await this.getOutput(baseImage, [
+		const spaceStr = await this.getOutput(BASE_IMAGE, [
 			'/bin/df',
 			'-B',
 			'1',
@@ -331,10 +319,5 @@ export default class DockerGC {
 		const used = parseInt(parts[2], 10);
 		const free = parseInt(parts[3], 10);
 		return { used, total, free };
-	}
-
-	private async getDaemonArchitecture() {
-		const { Arch } = await this.docker.version();
-		return Arch;
 	}
 }
