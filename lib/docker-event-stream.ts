@@ -3,7 +3,15 @@ import type Docker from 'dockerode';
 import { Stream } from 'node:stream';
 import type { Readable } from 'node:stream';
 
-const IMAGE_EVENTS = ['delete', 'import', 'pull', 'push', 'tag'];
+const IMAGE_EVENTS = [
+	'create',
+	'delete',
+	'import',
+	'load',
+	'pull',
+	'push',
+	'tag',
+];
 
 const CONTAINER_EVENTS = [
 	'attach',
@@ -63,27 +71,26 @@ export const normalizeImageRef = (ref: string): string => {
 	return digest != null ? `${name}@${digest}` : `${name}:${tag}`;
 };
 
-interface DockerEvent {
-	status: string;
-	id: string;
-	/** Only set for container events */
-	from?: string;
-	Type: 'container';
-	Action: 'destroy';
+/**
+ * An event from `GET /events`. The legacy `status`, `id` and `from` fields
+ * were deprecated in API v1.22 and are no longer sent from API v1.52 (Docker
+ * v29), so only the `Type`/`Action`/`Actor` fields can be relied upon.
+ * https://docs.docker.com/reference/api/engine/version-history/
+ */
+export interface DockerEvent {
+	Type: string;
+	/** Some actions include details after a colon, eg `exec_start: sh -c ls` */
+	Action: string;
 	Actor: {
-		ID: '9f49d061590dc6d242f902dff33a4536ac1baf584c19a4e68c0675178b4e567b';
-		Attributes: {
-			image: 'sha256:8ecd94718638c95609ec3a91d3241ce84b025de9bd089e1c463c8b4e7f83fc25';
-			'io.balena.architecture': 'aarch64';
-			'io.balena.device-type': 'jetson-xavier';
-			'io.balena.qemu.version': '7.0.0+balena1-aarch64';
-			maintainer: 'charlie <carlos.alvarez@kiwibot.com> dadaroce <davidson@kiwibot.com>';
-			name: 'zen_lichterman';
-		};
+		/** The image reference or ID for image events, the container ID for container events */
+		ID: string;
+		/** For container events `image` is the image reference the container was created with */
+		Attributes?: Record<string, string>;
 	};
-	scope: 'local';
-	time: 1701265973;
-	timeNano: '1701265973112542359';
+	scope?: 'local' | 'swarm';
+	/** Unix timestamp in seconds */
+	time: number;
+	timeNano: number;
 }
 
 export const parseEventStream = async (
@@ -92,9 +99,9 @@ export const parseEventStream = async (
 ) => {
 	const images = await docker.listImages({ all: true });
 
-	// Image events key by image ID, but container events key by
-	// image name/tag, so we need all three to avoid removing valid
-	// entries in the cleanup logic below
+	// Image events key by image ID or reference (eg `pull`/`push`), and
+	// container events key by the reference the container was created with, so
+	// we need all three to avoid removing valid entries in the cleanup logic below
 	const knownKeys = new Set(
 		images.flatMap((image) => [
 			image.Id,
@@ -125,18 +132,21 @@ export const parseEventStream = async (
 			objectMode: true,
 			transform(evt: DockerEvent, _encoding, cb) {
 				try {
-					const { status, id, from, time } = evt;
-					if (IMAGE_EVENTS.includes(status)) {
-						if (status === 'delete') {
-							layerMtimes.delete(normalizeImageRef(id));
+					const { Type, Actor, time } = evt;
+					const action = evt.Action?.split(':', 1)[0];
+					if (Type === 'image' && IMAGE_EVENTS.includes(action)) {
+						if (action === 'delete') {
+							layerMtimes.delete(normalizeImageRef(Actor.ID));
 						} else {
-							layerMtimes.set(normalizeImageRef(id), time);
+							layerMtimes.set(normalizeImageRef(Actor.ID), time);
 						}
-					} else if (CONTAINER_EVENTS.includes(status)) {
-						// Image events can share a status with container events but have
-						// no `from`, eg the image `create` event for builds (API v1.46+)
-						if (typeof from === 'string') {
-							layerMtimes.set(normalizeImageRef(from), time);
+					} else if (
+						Type === 'container' &&
+						CONTAINER_EVENTS.includes(action)
+					) {
+						const image = Actor.Attributes?.image;
+						if (image != null) {
+							layerMtimes.set(normalizeImageRef(image), time);
 						}
 					}
 					cb(null, layerMtimes);
@@ -153,7 +163,8 @@ export async function dockerMtimeStream(
 	layerMtimes: LayerMtimes = new Map(),
 ) {
 	const [stream, streamParser] = await Promise.allSettled([
-		docker.getEvents(),
+		// We only care about image and container events
+		docker.getEvents({ filters: { type: ['image', 'container'] } }),
 		parseEventStream(docker, layerMtimes),
 	]);
 	if (stream.status === 'rejected') {
