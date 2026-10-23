@@ -166,6 +166,24 @@ describe('Garbage collection', function () {
 		expect(imagesFound).to.be.false;
 	});
 
+	it('should remove an image tagged in a different repository to its digest', async function () {
+		this.timeout(600000);
+		if (SKIP_GC_TEST) {
+			return;
+		}
+
+		// The digest reference is in the `hello-world` repository, so removing
+		// the `some-repo` tag alone leaves the image on disk
+		await pullAsync(docker, NONE_TAG_IMAGES[0]);
+		const { Id: id } = await docker.getImage(NONE_TAG_IMAGES[0]).inspect();
+		await docker
+			.getImage(NONE_TAG_IMAGES[0])
+			.tag({ repo: 'some-repo', tag: 'some-tag' });
+		await dockerStorage.garbageCollect(1);
+		const imageFound = await promiseToBool(docker.getImage(id).inspect());
+		expect(imageFound).to.be.false;
+	});
+
 	it('should remove the LRU image', async function () {
 		this.timeout(600000);
 		if (SKIP_GC_TEST) {

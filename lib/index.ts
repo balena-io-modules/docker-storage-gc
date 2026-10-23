@@ -17,6 +17,7 @@ interface Events {
 	imageRemovalError(statusCode: string): void;
 }
 type Metrics = EventEmitter<Events>;
+type RemovalType = 'tag' | 'digest' | 'id';
 
 interface RemovableImageNode extends ImageNode {
 	removed?: true;
@@ -203,55 +204,47 @@ export default class DockerGC {
 		}
 	}
 
-	private removeImage(image: RemovableImageNode) {
-		return (
-			this.tryRemoveImageBy(image, image.repoTags, 'tag') ??
-			this.tryRemoveImageBy(image, image.repoDigests, 'digest') ??
-			this.tryRemoveImageBy(image, [image.id], 'id')
-		);
-	}
-
-	private tryRemoveImageBy(
-		image: RemovableImageNode,
-		attributes: [string],
-		removalType: 'tag' | 'digest' | 'id',
-	): Promise<void>;
-	private tryRemoveImageBy(
-		image: RemovableImageNode,
-		attributes: string[],
-		removalType: 'tag' | 'digest' | 'id',
-	): Promise<void> | undefined;
-	private tryRemoveImageBy(
-		image: RemovableImageNode,
-		attributes: string[],
-		removalType: 'tag' | 'digest' | 'id',
-	): Promise<void> | undefined {
-		if (attributes.length > 0) {
-			return (async () => {
-				for (const attribute of attributes) {
+	private async removeImage(image: RemovableImageNode): Promise<void> {
+		// Removing the last tag of a repository also removes the digests of that
+		// repository, but references from any other repository (eg the same image
+		// pulled by digest from another repo) keep the image alive, so we keep
+		// removing references until the engine reports that the image was deleted
+		const references: Array<[string, RemovalType]> = [
+			...image.repoTags.map((tag): [string, RemovalType] => [tag, 'tag']),
+			...image.repoDigests.map((digest): [string, RemovalType] => [
+				digest,
+				'digest',
+			]),
+			[image.id, 'id'],
+		];
+		for (const [reference, removalType] of references) {
+			console.log(
+				`[GC ${this.host}]: Removing image: ${reference} (id: ${image.id}, size: ${image.size}, sharedSize: ${image.sharedSize}, mtime: ${image.mtime})`,
+			);
+			let response: Array<Partial<Docker.ImageRemoveInfo>>;
+			try {
+				response = await this.docker
+					.getImage(reference)
+					.remove({ noprune: true });
+			} catch (e: any) {
+				if (e.statusCode === 404) {
 					console.log(
-						`[GC (${this.host}] Removing image : ${attribute} (id: ${image.id}, size: ${image.size}, sharedSize: ${image.sharedSize}, mtime: ${image.mtime})`,
+						`[GC ${this.host}]: Image already removed: ${reference} (id: ${image.id})`,
 					);
-					try {
-						await this.docker.getImage(attribute).remove({ noprune: true });
-					} catch (e: any) {
-						if (e.statusCode === 404) {
-							console.log(
-								`[GC (${this.host}] Image already removed: ${attribute} (id: ${image.id})`,
-							);
-							continue;
-						}
-						if (e.statusCode === 409) {
-							console.log(
-								`[GC (${this.host}] Image has dependent children, skipping: ${attribute} (id: ${image.id})`,
-							);
-							continue;
-						}
-						throw e;
-					}
-					this.metrics.emit('imageRemoved', removalType);
+					continue;
 				}
-			})();
+				if (e.statusCode === 409) {
+					console.log(
+						`[GC ${this.host}]: Image has dependent children, skipping: ${reference} (id: ${image.id})`,
+					);
+					continue;
+				}
+				throw e;
+			}
+			this.metrics.emit('imageRemoved', removalType);
+			if (response.some(({ Deleted }) => Deleted === image.id)) {
+				return;
+			}
 		}
 	}
 
