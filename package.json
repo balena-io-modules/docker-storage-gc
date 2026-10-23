@@ -31,13 +31,13 @@
   },
   "devDependencies": {
     "@balena/lint": "^9.3.8",
-    "@types/chai": "^5.0.0",
-    "@types/mocha": "^10.0.10",
-    "chai": "^5.0.0",
-    "mocha": "^11.7.4",
-    "timekeeper": "^2.3.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^6.0.0"
+    "@types/chai": "5.2.3",
+    "@types/mocha": "10.0.10",
+    "chai": "5.3.3",
+    "mocha": "11.8.0",
+    "timekeeper": "2.3.1",
+    "ts-node": "10.9.2",
+    "typescript": "6.0.3"
   },
   "versionist": {
     "publishedAt": "2026-10-23T00:01:05.832Z"
