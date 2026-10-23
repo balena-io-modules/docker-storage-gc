@@ -118,16 +118,35 @@ const getImagesToRemove = function (
 	return result;
 };
 
-const streamToString = (stream: NodeJS.ReadableStream) =>
-	new Promise<string>(function (resolve, reject) {
-		const chunks: Buffer[] = [];
-		stream
-			.on('error', reject)
-			.on('data', (chunk) => chunks.push(chunk))
-			.on('end', () => {
-				resolve(Buffer.concat(chunks).toString());
-			});
+/**
+ * Parse the output of `df -B 1 <mountpoint>` for a single filesystem
+ */
+export const parseDfOutput = (output: string) => {
+	const [header, ...lines] = output.trim().split(/\r?\n/);
+	// busybox prints `1-blocks`, GNU coreutils `1B-blocks`
+	if (
+		!/^Filesystem\s+1B?-blocks\s+Used\s+Available\s+Use%\s+Mounted on$/.test(
+			header,
+		)
+	) {
+		throw new Error(`Could not parse df output: ${output}`);
+	}
+	// Join the remaining lines, as busybox prints long filesystem names on their
+	// own line, eg `/dev/mapper/...\n   <total> <used> <free> <use%> /`
+	const parts = lines.join(' ').trim().split(/\s+/);
+	// <filesystem> <total> <used> <free> <use%> <mountpoint>
+	if (parts.length !== 6 || !/^\d+%$/.test(parts[4]) || parts[5] !== '/') {
+		throw new Error(`Could not parse df output: ${output}`);
+	}
+	const [total, used, free] = parts.slice(1, 4).map((part) => {
+		const n = Number(part);
+		if (!/^\d+$/.test(part) || !Number.isSafeInteger(n)) {
+			throw new Error(`Could not parse df output: ${output}`);
+		}
+		return n;
 	});
+	return { used, total, free };
+};
 
 // A multi-arch image, so that the daemon pulls the variant for its own platform
 const BASE_IMAGE = 'alpine:3.23';
@@ -279,18 +298,42 @@ export default class DockerGC {
 	}
 
 	private async getOutput(image: string, command: string[]): Promise<string> {
-		const [, container] = await (this.docker.run(
-			image,
-			command,
-			// @ts-expect-error -- The typings expect an array of streams but in reality they're optional
-			undefined,
-		) as Promise<[unknown, Docker.Container]>);
+		const container = await this.docker.createContainer({
+			Image: image,
+			Cmd: command,
+			Tty: true,
+		});
 		try {
-			const logs = await container.logs({ stdout: true, follow: true });
-			return await streamToString(logs);
+			await container.start();
+			const { StatusCode } = await container.wait();
+			const logs = await container.logs({ stdout: true, follow: false });
+			const output = logs.toString();
+			if (StatusCode !== 0) {
+				throw new Error(
+					`${command.join(' ')} exited with code ${StatusCode}: ${output}`,
+				);
+			}
+			return output;
 		} finally {
-			await container.wait();
-			await container.remove();
+			// Don't let a failure to clean up hide the result or the original error
+			try {
+				await container.remove({ force: true });
+			} catch (e) {
+				console.log(`[GC ${this.host}]: Failed to remove container:`, e);
+			}
+		}
+	}
+
+	private async ensureImage(image: string): Promise<void> {
+		try {
+			await this.docker.getImage(image).inspect();
+		} catch (e: any) {
+			if (e.statusCode !== 404) {
+				throw e;
+			}
+			await this.dockerProgress.pull(image, () => {
+				// noop
+			});
 		}
 	}
 
@@ -299,10 +342,9 @@ export default class DockerGC {
 		total: number;
 		free: number;
 	}> {
-		// Ensure the image is available (if it is this is essentially a no-op)
-		await this.dockerProgress.pull(BASE_IMAGE, () => {
-			// noop
-		});
+		// Only pull the image if it is missing, a pull always contacts the
+		// registry, which counts towards registry rate limits and fails offline
+		await this.ensureImage(BASE_IMAGE);
 
 		const spaceStr = await this.getOutput(BASE_IMAGE, [
 			'/bin/df',
@@ -310,16 +352,6 @@ export default class DockerGC {
 			'1',
 			'/',
 		]);
-		// First split the lines, as we're only interested in the second one
-		const lines = spaceStr.trim().split(/\r?\n/);
-		if (lines.length !== 2) {
-			throw new Error('Coult not parse df output');
-		}
-
-		const parts = lines[1].split(/\s+/);
-		const total = parseInt(parts[1], 10);
-		const used = parseInt(parts[2], 10);
-		const free = parseInt(parts[3], 10);
-		return { used, total, free };
+		return parseDfOutput(spaceStr);
 	}
 }
