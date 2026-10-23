@@ -88,8 +88,16 @@ export const createTree = function (
 		node.sharedSize = image.SharedSize >= 0 ? image.SharedSize : 0;
 		node.uniqueSize = Math.max(0, node.size - node.sharedSize);
 		// If we haven't seen the image at all then assume it is brand new and default it's
-		// mtime to `now` to avoid removing it
-		node.mtime = getMtime(node, layerMtimes) ?? now;
+		// mtime to `now` to avoid removing it. We record that so that the image ages
+		// from when we first saw it, otherwise an image that never has an event we
+		// track (or when the mtime stream isn't running) would be treated as brand
+		// new on every run and never become a candidate for removal
+		let mtime = getMtime(node, layerMtimes);
+		if (mtime == null) {
+			mtime = now;
+			layerMtimes.set(image.Id, mtime);
+		}
+		node.mtime = mtime;
 		node.isUsedByAContainer = usedImageIds.has(image.Id);
 		parent.children[image.Id] = node;
 	}

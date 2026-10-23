@@ -221,6 +221,23 @@ describe('createTree', function () {
 			expect(tree.children['sha256:new-image'].mtime).to.equal(expectedNow);
 		});
 
+		it('should keep the mtime of when an image was first seen', function () {
+			const images: ImageInfo[] = [
+				makeImage('sha256:built', '', { tags: ['built:v1'] }),
+			];
+			const mtimes: LayerMtimes = new Map();
+
+			tk.freeze(FROZEN_DATE);
+			createTree(images, [], mtimes);
+			tk.freeze(FROZEN_DATE + 3600 * 1000);
+			const tree = createTree(images, [], mtimes);
+			tk.reset();
+
+			expect(tree.children['sha256:built'].mtime).to.equal(
+				Math.floor(FROZEN_DATE / 1000),
+			);
+		});
+
 		it('should treat mtime=0 as old, not default to current time', function () {
 			const images: ImageInfo[] = [
 				makeImage('sha256:old', '', { tags: ['old:v1'] }),
