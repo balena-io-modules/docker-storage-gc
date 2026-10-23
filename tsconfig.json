@@ -7,7 +7,6 @@
 		"noUnusedLocals": true,
 		"outDir": "build/",
 		"preserveConstEnums": true,
-		"removeComments": true,
 		"rootDir": "lib",
 		"sourceMap": true,
 		"target": "es2022",

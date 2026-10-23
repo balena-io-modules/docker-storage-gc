@@ -56,7 +56,8 @@ export interface ImageNode {
 	uniqueSize: number;
 	repoTags: string[];
 	repoDigests: string[];
-	mtime: NonNullable<LayerMtimes extends Map<any, infer U> ? U : never>;
+	/** Unix timestamp in seconds of when the image was last used */
+	mtime: number;
 	children: Record<string, ImageNode>;
 	isUsedByAContainer?: boolean;
 }
