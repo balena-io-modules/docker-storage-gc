@@ -7,6 +7,7 @@ import type { ImageNode } from './docker-image-tree';
 import { dockerImageTree } from './docker-image-tree';
 import { getDocker } from './docker';
 import { setTimeout } from 'timers/promises';
+import { finished } from 'node:stream';
 import type { Transform } from 'node:stream';
 
 export type RemovalType = 'tag' | 'digest' | 'id';
@@ -167,12 +168,21 @@ export default class DockerGC {
 	private dockerProgress: DockerProgress;
 	private currentMtimes: LayerMtimes = new Map();
 	private mtimeStream: Transform | undefined;
+	private mtimeStreamSetup: Promise<void> | undefined;
+	private mtimeStreamController: AbortController | undefined;
+	// Whether an mtime stream has been requested, so that `setDocker` can
+	// restart it on the new host even if a previous `setDocker` failed
+	private mtimeStreamWanted = false;
 
 	public setHostname(hostname: string): void {
 		this.host = hostname;
 	}
 
 	public async setDocker(hostObj: Docker.DockerOptions): Promise<void> {
+		// An existing mtime stream would keep watching the previous docker host
+		const restartMtimeStream = this.mtimeStreamWanted;
+		this.destroyMtimeStream();
+		this.mtimeStreamWanted = restartMtimeStream;
 		this.currentMtimes = new Map();
 		const docker = getDocker(hostObj);
 		this.docker = docker;
@@ -182,41 +192,91 @@ export default class DockerGC {
 		this.dockerProgress = new DockerProgress({ docker });
 		// Check that we can connect to the daemon
 		await docker.ping();
+		// The stream may have been destroyed whilst we were waiting
+		if (this.mtimeStreamWanted) {
+			await this.setupMtimeStream();
+		}
 	}
 
 	public minDelayMs = 1000;
 	public maxDelayMs = 60000;
-	private async restartMtimeStream(attempts = 0) {
+	private async restartMtimeStream(signal: AbortSignal, attempts = 0) {
 		const delayMs = Math.min(2 ** attempts * this.minDelayMs, this.maxDelayMs);
-		await setTimeout(delayMs);
+		try {
+			await setTimeout(delayMs, undefined, { signal });
+		} catch {
+			// The mtime stream was destroyed whilst we were waiting
+			return;
+		}
 		try {
 			await this.setupMtimeStream();
 		} catch ($err) {
+			if (signal.aborted) {
+				return;
+			}
 			console.error('Error restarting mtime stream:', $err);
-			void this.restartMtimeStream(attempts + 1);
+			void this.restartMtimeStream(signal, attempts + 1);
 		}
 	}
 
 	public async setupMtimeStream(): Promise<void> {
+		this.mtimeStreamWanted = true;
+		// Share an in progress setup so that concurrent calls don't create multiple streams
+		if (this.mtimeStreamSetup == null) {
+			const setup = this.startMtimeStream().finally(() => {
+				// A destroy may have replaced it with a newer setup in the meantime
+				if (this.mtimeStreamSetup === setup) {
+					this.mtimeStreamSetup = undefined;
+				}
+			});
+			this.mtimeStreamSetup = setup;
+		}
+		await this.mtimeStreamSetup;
+	}
+
+	private async startMtimeStream(): Promise<void> {
 		if (this.mtimeStream != null) {
 			return;
 		}
-		this.mtimeStream = await dockerMtimeStream(this.docker, this.currentMtimes);
-		this.mtimeStream.on('data', (layerMtimes: LayerMtimes) => {
+		// Aborted by `destroyMtimeStream`, to cancel an in progress setup or pending restart
+		this.mtimeStreamController ??= new AbortController();
+		const { signal } = this.mtimeStreamController;
+		const stream = await dockerMtimeStream(this.docker, this.currentMtimes);
+		if (signal.aborted) {
+			stream.destroy();
+			return;
+		}
+		this.mtimeStream = stream;
+		stream.on('data', (layerMtimes: LayerMtimes) => {
 			this.currentMtimes = layerMtimes;
 		});
-		this.mtimeStream.on('error', (err) => {
-			console.error('Error in mtime stream:', err);
-			this.destroyMtimeStream();
-			void this.restartMtimeStream();
+		// This covers both errors and the events request ending, eg when the
+		// daemon restarts, which would otherwise leave us without a stream
+		finished(stream, (err) => {
+			if (this.mtimeStream !== stream) {
+				// The stream was intentionally destroyed
+				return;
+			}
+			console.error('Error in mtime stream:', err ?? 'stream ended');
+			this.mtimeStream = undefined;
+			stream.destroy();
+			void this.restartMtimeStream(signal);
 		});
 	}
 
 	public destroyMtimeStream(): void {
-		if (this.mtimeStream != null) {
-			this.mtimeStream.removeAllListeners();
-			this.mtimeStream.destroy();
+		this.mtimeStreamWanted = false;
+		this.mtimeStreamController?.abort();
+		this.mtimeStreamController = undefined;
+		// A setup that is still in progress has been aborted, so later setups
+		// must not wait on it
+		this.mtimeStreamSetup = undefined;
+		const stream = this.mtimeStream;
+		if (stream != null) {
 			this.mtimeStream = undefined;
+			// Do not remove the listeners first, the pipeline relies on them to
+			// destroy the underlying events request when this stream is destroyed
+			stream.destroy();
 		}
 	}
 
