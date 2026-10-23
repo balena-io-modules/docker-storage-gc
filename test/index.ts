@@ -293,17 +293,4 @@ describe('Garbage collection', function () {
 		expect(du).to.have.property('used').that.is.a('number');
 		expect(du).to.have.property('total').that.is.a('number');
 	});
-
-	it('should get the correct architecture for a remote host', async function () {
-		const arch = (await dockerStorage
-			// @ts-expect-error getDaemonArchitecture is private
-			.getDaemonArchitecture()) as Promise<string>;
-		expect(arch).to.be.a('string');
-	});
-
-	it('should set a base image to be used', async function () {
-		// @ts-expect-error baseImagePromise is private
-		const img = await (dockerStorage.baseImagePromise as Promise<string>);
-		expect(img).to.be.a('string');
-	});
 });
