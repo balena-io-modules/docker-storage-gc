@@ -1,5 +1,4 @@
 import type { LayerMtimes } from '../build/docker-event-stream';
-import type Dockerode from 'dockerode';
 
 import { expect } from 'chai';
 import fs from 'fs';
@@ -8,11 +7,9 @@ import {
 	normalizeImageRef,
 	parseEventStream,
 } from '../build/docker-event-stream';
+import { createMockDocker } from './lib/common';
 
 import fixtureImages from './fixtures/docker-images.json';
-
-const createMockDocker = (imageList = fixtureImages) =>
-	({ listImages: () => Promise.resolve(imageList) }) as Dockerode;
 
 const pipeEvents = async (events: object[]): Promise<LayerMtimes> => {
 	const streamParsers = await parseEventStream(createMockDocker([]));
@@ -73,13 +70,13 @@ describe('parseEventStream mtime persistence', function () {
 		const existingId = fixtureImages[0].Id;
 		const val = 1234567890;
 		const layerMtimes = new Map([[existingId, val]]);
-		await parseEventStream(createMockDocker(), layerMtimes);
+		await parseEventStream(createMockDocker(fixtureImages), layerMtimes);
 		expect(layerMtimes.get(existingId)).to.eq(val);
 	});
 
 	it('should set mtime to 0 for new images not in layerMtimes', async () => {
 		const layerMtimes = new Map();
-		await parseEventStream(createMockDocker(), layerMtimes);
+		await parseEventStream(createMockDocker(fixtureImages), layerMtimes);
 		for (const image of fixtureImages) {
 			expect(layerMtimes.get(image.Id)).to.eq(0);
 		}
@@ -88,7 +85,7 @@ describe('parseEventStream mtime persistence', function () {
 	it('should remove entries for images that no longer exist', async () => {
 		const key = 'sha256:nonexistent';
 		const layerMtimes = new Map([[key, 1234567890]]);
-		await parseEventStream(createMockDocker(), layerMtimes);
+		await parseEventStream(createMockDocker(fixtureImages), layerMtimes);
 		expect(layerMtimes.has(key)).to.eq(false);
 	});
 
@@ -96,7 +93,7 @@ describe('parseEventStream mtime persistence', function () {
 		const key = 'busybox:latest';
 		const val = 9999999999;
 		const layerMtimes = new Map([[key, val]]);
-		await parseEventStream(createMockDocker(), layerMtimes);
+		await parseEventStream(createMockDocker(fixtureImages), layerMtimes);
 		expect(layerMtimes.get(key)).to.eq(val);
 	});
 
@@ -105,14 +102,14 @@ describe('parseEventStream mtime persistence', function () {
 			'sha256:a8cf7ff6367c2afa2a90acd081b484cbded349a7076e7bdf37a05279f276bc12';
 		const val = 8888888888;
 		const layerMtimes = new Map([[key, val]]);
-		await parseEventStream(createMockDocker(), layerMtimes);
+		await parseEventStream(createMockDocker(fixtureImages), layerMtimes);
 		expect(layerMtimes.get(key)).to.eq(val);
 	});
 
 	it('should remove entries keyed by tags that no longer exist', async () => {
 		const key = 'oldimage:v1';
 		const layerMtimes = new Map([[key, 1234567890]]);
-		await parseEventStream(createMockDocker(), layerMtimes);
+		await parseEventStream(createMockDocker(fixtureImages), layerMtimes);
 		expect(layerMtimes.has(key)).to.eq(false);
 	});
 
