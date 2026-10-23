@@ -1,3 +1,4 @@
+import type Docker from 'dockerode';
 import type { ContainerInfo, ImageInfo } from 'dockerode';
 import { expect } from 'chai';
 import fs from 'fs';
@@ -169,6 +170,42 @@ describe('createTree', function () {
 			tk.reset();
 
 			// Should resolve to the tag-keyed mtime, not the ID-keyed 0
+			expect(tree.children['sha256:img1'].mtime).to.equal(recentTime);
+		});
+
+		it('should resolve mtime recorded by a container event that used an untagged reference', async function () {
+			const recentTime = 1700000000;
+			const images: ImageInfo[] = [
+				makeImage('sha256:img1', '', { tags: ['alpine:latest'] }),
+			];
+			const [parser, transform] = await parseEventStream({
+				listImages: () => Promise.resolve(images),
+			} as unknown as Docker);
+			let mtimes: LayerMtimes = new Map();
+			await Stream.promises.pipeline(
+				Stream.Readable.from([
+					JSON.stringify({
+						status: 'start',
+						id: 'c1',
+						from: 'alpine',
+						time: recentTime,
+					}),
+				]),
+				parser,
+				transform,
+				new Stream.Writable({
+					objectMode: true,
+					write(data: LayerMtimes, _encoding, cb) {
+						mtimes = data;
+						cb();
+					},
+				}),
+			);
+
+			tk.freeze(FROZEN_DATE);
+			const tree = createTree(images, [], mtimes);
+			tk.reset();
+
 			expect(tree.children['sha256:img1'].mtime).to.equal(recentTime);
 		});
 

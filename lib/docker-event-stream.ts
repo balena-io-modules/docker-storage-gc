@@ -28,6 +28,38 @@ const CONTAINER_EVENTS = [
 
 export type LayerMtimes = Map<string, number>;
 
+/**
+ * Normalize an image reference to the familiar form that the engine reports in
+ * `RepoTags`/`RepoDigests` (eg `alpine:latest`, `alpine@sha256:...`), or to a
+ * full `sha256:` image ID. Container events reference the image exactly as the
+ * container was created with it, eg `alpine` or `docker.io/library/alpine:3.18`,
+ * so without this they would never match the image they were created from.
+ * Short image IDs are left as-is as they are indistinguishable from repo names.
+ */
+export const normalizeImageRef = (ref: string): string => {
+	if (/^[a-f0-9]{64}$/.test(ref)) {
+		return `sha256:${ref}`;
+	}
+	if (ref.startsWith('sha256:')) {
+		return ref;
+	}
+	const digestIndex = ref.indexOf('@');
+	let name = digestIndex === -1 ? ref : ref.slice(0, digestIndex);
+	const digest = digestIndex === -1 ? undefined : ref.slice(digestIndex + 1);
+	let tag = 'latest';
+	const tagIndex = name.lastIndexOf(':');
+	if (tagIndex > name.lastIndexOf('/')) {
+		tag = name.slice(tagIndex + 1);
+		name = name.slice(0, tagIndex);
+	}
+	name = name.replace(/^(?:docker\.io|index\.docker\.io)\//, '');
+	if (/^library\/[^/]+$/.test(name)) {
+		name = name.slice('library/'.length);
+	}
+	// The engine reports digest references without the tag
+	return digest != null ? `${name}@${digest}` : `${name}:${tag}`;
+};
+
 interface DockerEvent {
 	status: string;
 	id: string;
@@ -92,12 +124,12 @@ export const parseEventStream = async (
 					const { status, id, from, time } = evt;
 					if (IMAGE_EVENTS.includes(status)) {
 						if (status === 'delete') {
-							layerMtimes.delete(id);
+							layerMtimes.delete(normalizeImageRef(id));
 						} else {
-							layerMtimes.set(id, time);
+							layerMtimes.set(normalizeImageRef(id), time);
 						}
 					} else if (CONTAINER_EVENTS.includes(status)) {
-						layerMtimes.set(from, time);
+						layerMtimes.set(normalizeImageRef(from), time);
 					}
 					cb(null, layerMtimes);
 				} catch (err: any) {
