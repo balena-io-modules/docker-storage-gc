@@ -1,4 +1,27 @@
 - commits:
+    - subject: Use a multi-arch alpine image for the free space check
+      hash: 90fbf65be978a12c34a6716f5326a7bb94b0f12a
+      body: |
+        The free space check used `alpine:3.6` (released in 2017 and long EOL)
+        via per-architecture repositories, and only knew about amd64, arm64 and
+        arm, so `setDocker` threw for any other daemon architecture (eg
+        riscv64, ppc64le, s390x, 386), which also prevented garbage collection.
+
+        Use the multi-arch `alpine:3.23` for every architecture and let the
+        daemon pull the variant for its own platform, so the architecture no
+        longer needs to be detected. `setDocker` still checks that it can
+        connect to the daemon. Hosts will pull the new image once on their next
+        `getDaemonFreeSpace`.
+
+        https://balena.fibery.io/Work/Project/3116
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Page-
+  version: 4.3.0
+  title: ""
+  date: 2026-10-26T08:21:01.678Z
+- commits:
     - subject: Record the mtime of images when they are first seen
       hash: 99d8ed0425c6eb6b357bf4d099c9b4f2ddd66c0e
       body: |
