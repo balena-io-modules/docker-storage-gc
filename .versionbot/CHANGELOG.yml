@@ -1,4 +1,23 @@
 - commits:
+    - subject: Record the mtime of images when they are first seen
+      hash: 99d8ed0425c6eb6b357bf4d099c9b4f2ddd66c0e
+      body: |
+        Images that are not in the mtimes map default to `now` so that new
+        images are not removed, but that default was not recorded, so an image
+        that never has an event we track (eg untagged BuildKit output, or any
+        image when the mtime stream is not running) was considered brand new on
+        every GC run and would only ever be removed after everything else.
+        Record the default so the image ages from when it was first seen.
+
+        https://balena.fibery.io/Work/Project/3116
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Page-
+  version: 4.2.16
+  title: ""
+  date: 2026-10-26T01:56:09.225Z
+- commits:
     - subject: Pin dependencies
       hash: d84f3af1ce4f5caa33dd3dd510e2bb3d2c7c4377
       body: |
