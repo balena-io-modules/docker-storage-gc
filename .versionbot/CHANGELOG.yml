@@ -1,4 +1,28 @@
 - commits:
+    - subject: Keep removing image references until the image is actually deleted
+      hash: c391287ff1abe85857a08d65bcf6c9a2cbd730d6
+      body: |
+        If an image had any tags only the tags were removed, but the engine
+        only cleans up digests from the same repository as the removed tag, so
+        an image that is also referenced by a digest from another repository
+        (eg pulled by digest from two repositories, or tagged locally into a
+        different repository than it was pulled from) was untagged but left on
+        disk, whilst still being counted as reclaimed. It would only be removed
+        on a later GC run once it had become untagged.
+
+        Remove the tags, then digests, then the ID, stopping as soon as the
+        removal response reports the image as deleted. Also fix the unbalanced
+        `[GC (host]` log prefix.
+
+        https://balena.fibery.io/Work/Project/3116
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Page-
+  version: 4.3.1
+  title: ""
+  date: 2026-10-28T08:21:30.774Z
+- commits:
     - subject: Use a multi-arch alpine image for the free space check
       hash: 90fbf65be978a12c34a6716f5326a7bb94b0f12a
       body: |
