@@ -4,8 +4,10 @@ import type Dockerode from 'dockerode';
 import { expect } from 'chai';
 import fs from 'fs';
 import { Stream } from 'node:stream';
-import { parseEventStream } from '../build/docker-event-stream';
-import { docker } from './lib/common';
+import {
+	normalizeImageRef,
+	parseEventStream,
+} from '../build/docker-event-stream';
 
 import fixtureImages from './fixtures/docker-images.json';
 
@@ -13,7 +15,7 @@ const createMockDocker = (imageList = fixtureImages) =>
 	({ listImages: () => Promise.resolve(imageList) }) as Dockerode;
 
 const pipeEvents = async (events: object[]): Promise<LayerMtimes> => {
-	const streamParsers = await parseEventStream(docker);
+	const streamParsers = await parseEventStream(createMockDocker([]));
 	let mtimes: LayerMtimes = new Map();
 	const input = new Stream.Readable({
 		read() {
@@ -136,5 +138,54 @@ describe('parseEventStream mtime persistence', function () {
 			},
 		]);
 		expect(mtimes.get('sha256:abc123def456')).to.equal(1700000000);
+	});
+});
+
+describe('normalizeImageRef', function () {
+	const id = '6d41a4a0bf8168363e29da8a5ecbf3cd6c37e3f5a043decd5e7da6e427ba869c';
+	const digest =
+		'sha256:a8cf7ff6367c2afa2a90acd081b484cbded349a7076e7bdf37a05279f276bc12';
+	for (const [input, expected] of [
+		['alpine', 'alpine:latest'],
+		['alpine:3.18', 'alpine:3.18'],
+		['library/alpine:3.18', 'alpine:3.18'],
+		['docker.io/library/alpine', 'alpine:latest'],
+		['docker.io/library/alpine:3.18', 'alpine:3.18'],
+		['index.docker.io/library/alpine:3.18', 'alpine:3.18'],
+		['docker.io/balena/open-balena-api', 'balena/open-balena-api:latest'],
+		['balena/open-balena-api:v1', 'balena/open-balena-api:v1'],
+		['localhost:5000/foo', 'localhost:5000/foo:latest'],
+		['localhost:5000/foo:bar', 'localhost:5000/foo:bar'],
+		[
+			'registry.example.com/library/foo:1',
+			'registry.example.com/library/foo:1',
+		],
+		[`alpine@${digest}`, `alpine@${digest}`],
+		[`alpine:3.18@${digest}`, `alpine@${digest}`],
+		[`docker.io/library/alpine@${digest}`, `alpine@${digest}`],
+		[
+			`registry2.balena-cloud.com/v2/abc@${digest}`,
+			`registry2.balena-cloud.com/v2/abc@${digest}`,
+		],
+		[id, `sha256:${id}`],
+		[`sha256:${id}`, `sha256:${id}`],
+	]) {
+		it(`should normalize ${input}`, function () {
+			expect(normalizeImageRef(input)).to.equal(expected);
+		});
+	}
+
+	it('should match container events that reference an image without a tag', async () => {
+		const mtimes = await pipeEvents([
+			{ status: 'start', id: 'c1', from: 'alpine', time: 1700000000 },
+			{
+				status: 'start',
+				id: 'c2',
+				from: 'docker.io/library/busybox:1.36',
+				time: 1700000001,
+			},
+		]);
+		expect(mtimes.get('alpine:latest')).to.equal(1700000000);
+		expect(mtimes.get('busybox:1.36')).to.equal(1700000001);
 	});
 });
