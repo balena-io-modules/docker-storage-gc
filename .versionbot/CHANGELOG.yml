@@ -1,4 +1,16 @@
 - commits:
+    - subject: Update dependency mocha to v12
+      hash: 76a7a06be7bc94e7213b8be2dbb0434400caab65
+      body: |
+        Update mocha from 11.8.0 to 12.0.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+  version: 4.3.2
+  title: ""
+  date: 2026-11-02T22:41:29.193Z
+- commits:
     - subject: Keep removing image references until the image is actually deleted
       hash: c391287ff1abe85857a08d65bcf6c9a2cbd730d6
       body: |
