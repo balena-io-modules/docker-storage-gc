@@ -303,6 +303,48 @@ describe('Garbage collection', function () {
 		}
 	});
 
+	it('should not delete an image whose container referenced it without the familiar tag', async function () {
+		if (SKIP_GC_TEST) {
+			return;
+		}
+		this.timeout(600000);
+		const containerName = 'untagged-ref-mtime-test';
+
+		await pullAsync(docker, IMAGES[0]);
+		dockerStorage.destroyMtimeStream();
+		dockerStorage = new DockerGC();
+		await dockerStorage.setDocker(DOCKER_OPTS);
+		await dockerStorage.setupMtimeStream();
+
+		try {
+			await pullAsync(docker, IMAGES[1]);
+
+			// Reference the image by its fully qualified name, which is what the
+			// container event will report rather than the `alpine:3.18` RepoTag
+			const container = await docker.createContainer({
+				Image: `docker.io/library/${IMAGES[0]}`,
+				Cmd: ['true'],
+				name: containerName,
+			});
+			await container.start();
+			await container.wait();
+			await container.remove();
+
+			await dockerStorage.garbageCollect(1);
+
+			expect(await promiseToBool(docker.getImage(IMAGES[0]).inspect())).to.be
+				.true;
+			expect(await promiseToBool(docker.getImage(IMAGES[1]).inspect())).to.be
+				.false;
+		} finally {
+			try {
+				await docker.getContainer(containerName).remove({ force: true });
+			} catch {
+				// ignore
+			}
+		}
+	});
+
 	it('should get daemon host disk usage', async function () {
 		this.timeout(600000);
 		const du = await dockerStorage.getDaemonFreeSpace();
