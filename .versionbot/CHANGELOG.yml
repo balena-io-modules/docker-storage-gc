@@ -1,4 +1,36 @@
 - commits:
+    - subject: Normalize image references from events before recording mtimes
+      hash: 17399de9155db656747ba3ef7bdd38cfb5b702fa
+      body: |
+        Container events report the image exactly as the container was created
+        with it (the container's `Config.Image`), eg `alpine`,
+        `docker.io/library/alpine:3.18` or a bare 64 character hex ID, whereas
+        the image list reports familiar `RepoTags`/`RepoDigests` such as
+        `alpine:latest`. Those mtimes therefore never matched any image, so
+        images that were in active use but referenced that way were treated as
+        unused and evicted first, and the stale keys were then dropped on the
+        next stream restart.
+
+        Normalize references to the familiar form the engine uses (adding the
+        implicit `:latest`, removing the `docker.io/` and `library/` prefixes,
+        dropping the tag from `name:tag@digest`, and prefixing bare hex IDs
+        with `sha256:`). Short image IDs can't be distinguished from repository
+        names, so they are normalized like one (eg `6d41a4a0bf81:latest`) and
+        still won't match the image.
+
+        Events with a container status but no `from` are skipped, since image
+        events can share a status with container events, eg the image `create`
+        event sent for each build from API v1.46 (Docker 27).
+
+        https://balena.fibery.io/Work/Project/3116
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Page-
+  version: 4.3.5
+  title: ""
+  date: 2026-11-10T00:28:16.504Z
+- commits:
     - subject: Update dependency chai to v6
       hash: c5b7c5847af1cf553985a827f13093fdc4b4f0b6
       body: |
