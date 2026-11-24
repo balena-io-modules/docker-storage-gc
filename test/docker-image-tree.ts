@@ -7,12 +7,12 @@ import { Stream } from 'node:stream';
 import type { LayerMtimes } from '../build/docker-event-stream';
 import { parseEventStream } from '../build/docker-event-stream';
 import { createTree } from '../build/docker-image-tree';
-import { docker, makeContainer, makeImage } from './lib/common';
+import { createMockDocker, makeContainer, makeImage } from './lib/common';
 
 const FROZEN_DATE = Date.UTC(2016, 0, 1);
 
 const getLayerMtimes = async () => {
-	const streamParsers = await parseEventStream(docker);
+	const streamParsers = await parseEventStream(createMockDocker());
 
 	let mtimes: LayerMtimes;
 	await Stream.promises.pipeline(

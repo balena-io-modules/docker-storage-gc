@@ -42,3 +42,8 @@ export const makeImage = (
 
 export const makeContainer = (imageId: string): ContainerInfo =>
 	({ ImageID: imageId }) as unknown as ContainerInfo;
+
+// A minimal stand-in for dockerode for unit tests that only need `listImages`,
+// so that they can run without a real docker engine
+export const createMockDocker = (imageList: readonly object[] = []) =>
+	({ listImages: () => Promise.resolve(imageList) }) as unknown as Docker;
