@@ -69,15 +69,23 @@ export const createTree = function (
 ): ImageNode {
 	const now = Math.floor(Date.now() / 1000); // unix seconds, matching Docker event `time` field
 	const usedImageIds = new Set(containers.map((c) => c.ImageID));
-	const tree: {
-		[key: string]: ImageNode;
-	} = {};
 	const root =
 		'0000000000000000000000000000000000000000000000000000000000000000';
+	// Create the root upfront so that we still return a tree when there are no images
+	const tree: {
+		[key: string]: ImageNode;
+	} = { [root]: createNode(root) };
 
+	const imageIds = new Set(images.map((image) => image.Id));
 	for (const image of images) {
 		const node = (tree[image.Id] ??= createNode(image.Id));
-		const parentId = image.ParentId || root;
+		// If an image's parent is not in the image list then attach it to the root,
+		// otherwise it would hang off a placeholder node that is never attached to
+		// the tree, making the image and all of its descendants unreachable and
+		// therefore never considered for removal. This can happen with the
+		// containerd image store, where the parent is only a label on the image.
+		const parentId =
+			image.ParentId && imageIds.has(image.ParentId) ? image.ParentId : root;
 		const parent = (tree[parentId] ??= createNode(parentId));
 
 		node.repoTags = saneRepoAttrs(image.RepoTags);

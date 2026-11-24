@@ -30,8 +30,35 @@ const getLayerMtimes = async () => {
 };
 
 describe('createTree', function () {
-	it.skip('should work with empty input', function () {
-		// TODO
+	it('should work with empty input', function () {
+		tk.freeze(FROZEN_DATE);
+		const tree = createTree([], [], new Map());
+		tk.reset();
+		expect(tree).to.deep.equal({
+			id: '0000000000000000000000000000000000000000000000000000000000000000',
+			size: 0,
+			sharedSize: 0,
+			uniqueSize: 0,
+			repoTags: [],
+			repoDigests: [],
+			mtime: Math.floor(FROZEN_DATE / 1000),
+			isUsedByAContainer: false,
+			children: {},
+		});
+	});
+
+	it('should attach images whose parent is not in the image list to the root', function () {
+		const images: ImageInfo[] = [
+			makeImage('sha256:child', 'sha256:missing', { tags: ['child:v1'] }),
+			makeImage('sha256:grandchild', 'sha256:child', {
+				tags: ['grandchild:v1'],
+			}),
+		];
+		const tree = createTree(images, [], new Map());
+		expect(tree.children).to.have.keys(['sha256:child']);
+		expect(tree.children['sha256:child'].children).to.have.keys([
+			'sha256:grandchild',
+		]);
 	});
 
 	it('should return a tree of images', async function () {
