@@ -1,4 +1,35 @@
 - commits:
+    - subject: Avoid pulling on every free space check and make df parsing robust
+      hash: 1729e7d190efc5431b3c6185754a38bda7d2dd22
+      body: >
+        - `getDaemonFreeSpace` pulled the base image on every call. A pull
+          always contacts the registry even when the image is present, so this
+          counted towards Docker Hub rate limits and failed whenever the
+          registry was unreachable. Only pull it if it is missing
+        - busybox `df` prints filesystem names longer than 20 characters on
+          their own line (eg devicemapper), which failed the `lines.length !== 2`
+          check. Join the data lines instead, and strictly validate the output:
+          the header must be busybox's or coreutils', the row must be for `/`,
+          and partial numbers (eg `1000abc`), exponents, negatives and unsafe
+          integers are rejected rather than truncated or returned as `NaN`
+        - Create, start and remove the container directly instead of via
+          `docker.run`, which leaked the container if starting it failed, left
+          an unconsumed attach stream open, and needed a `@ts-expect-error`.
+          The container uses a TTY, so its logs are the plain output rather
+          than multiplexed frames
+        - Fail with the output if `df` exits with a non-zero code, and don't let
+          a failure to remove the container hide the result or the original
+          error
+
+        https://balena.fibery.io/Work/Project/3116
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Page-
+  version: 4.3.10
+  title: ""
+  date: 2026-11-24T12:44:26.141Z
+- commits:
     - subject: "Tests: run the parser/tree unit tests without a docker engine"
       hash: e8c500fb0b4b5412ae6b9834a0c5dd81de8b27a1
       body: |
