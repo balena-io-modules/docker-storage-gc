@@ -1,4 +1,38 @@
 - commits:
+    - subject: Fix the metrics event typings and always record the GC run time
+      hash: f82975847c4e8e5e4e8062c0928362ce3540e531
+      body: >
+        - `imageRemovalError` was typed as receiving a string, but dockerode
+          errors have a numeric `statusCode`, and none at all when the request
+          itself fails (eg the connection is refused)
+        - `imageRemoved` now receives the `'tag' | 'digest' | 'id'` union
+
+        - Export the `Events`, `Metrics` and `RemovalType` types so consumers
+        can
+          name them
+        - Document what each metric actually reports, notably `spaceReclaimed`
+          is the amount requested at the start of a run, not what was reclaimed.
+          Stop removing comments from the build so that this documentation
+          reaches the published type declarations
+        - `gcRunTime` was not emitted if building the image tree failed
+
+        - Simplify the `ImageNode.mtime` type to `number`
+
+
+        TypeScript consumers that declared an `imageRemovalError` listener as
+
+        taking a `string` will need to update it.
+
+
+        https://balena.fibery.io/Work/Project/3116
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Page-
+  version: 4.3.7
+  title: ""
+  date: 2026-11-24T00:28:17.373Z
+- commits:
     - subject: Use one docker instance for pulling and running the base image
       hash: 215e3d38b7bcec301ec6458b5ac37ee9dacbf062
       body: |
