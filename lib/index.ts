@@ -9,15 +9,21 @@ import { getDocker } from './docker';
 import { setTimeout } from 'timers/promises';
 import type { Transform } from 'node:stream';
 
-interface Events {
+export type RemovalType = 'tag' | 'digest' | 'id';
+
+export interface Events {
+	/** The number of images selected for removal by a GC run */
 	numberImagesToRemove(n: number): void;
+	/** The duration of a GC run in milliseconds, emitted whether or not it succeeded */
 	gcRunTime(duration: number): void;
-	imageRemoved(removalType: string): void;
+	/** Emitted for every image reference that is successfully removed */
+	imageRemoved(removalType: RemovalType): void;
+	/** The amount of space a GC run was asked to reclaim, emitted at the start of the run */
 	spaceReclaimed(reclaimSpace: number): void;
-	imageRemovalError(statusCode: string): void;
+	/** The HTTP status code of a failed removal, `undefined` if the request itself failed */
+	imageRemovalError(statusCode: number | undefined): void;
 }
-type Metrics = EventEmitter<Events>;
-type RemovalType = 'tag' | 'digest' | 'id';
+export type Metrics = EventEmitter<Events>;
 
 interface RemovableImageNode extends ImageNode {
 	removed?: true;
@@ -247,24 +253,26 @@ export default class DockerGC {
 		const startTime = process.hrtime();
 		this.metrics.emit('spaceReclaimed', reclaimSpace);
 
-		const tree = await dockerImageTree(this.docker, this.currentMtimes);
-		const images = getImagesToRemove(tree, reclaimSpace, this.metrics);
-		for (const image of images) {
-			try {
-				await this.removeImage(image);
-			} catch (e: any) {
-				this.metrics.emit('imageRemovalError', e.statusCode);
-				console.log(`[GC ${this.host}]: Failed to remove image: `, image);
-				console.log(e);
-				if (attemptAll) {
-					err ??= e;
-				} else {
-					recordGcRunTime(startTime, this.metrics);
-					throw e;
+		try {
+			const tree = await dockerImageTree(this.docker, this.currentMtimes);
+			const images = getImagesToRemove(tree, reclaimSpace, this.metrics);
+			for (const image of images) {
+				try {
+					await this.removeImage(image);
+				} catch (e: any) {
+					this.metrics.emit('imageRemovalError', e.statusCode);
+					console.log(`[GC ${this.host}]: Failed to remove image: `, image);
+					console.log(e);
+					if (attemptAll) {
+						err ??= e;
+					} else {
+						throw e;
+					}
 				}
 			}
+		} finally {
+			recordGcRunTime(startTime, this.metrics);
 		}
-		recordGcRunTime(startTime, this.metrics);
 		if (err != null) {
 			throw err;
 		}
