@@ -1,4 +1,22 @@
 - commits:
+    - subject: "Tests: run the parser/tree unit tests without a docker engine"
+      hash: e8c500fb0b4b5412ae6b9834a0c5dd81de8b27a1
+      body: |
+        `parseEventStream` calls `listImages`, so the unit tests for the event
+        parser and image tree were silently depending on a live engine via
+        `test/lib/common.ts`. Use a mock docker that only provides `listImages`
+        so these tests can run anywhere, and only the GC integration tests in
+        `test/index.ts` require a real engine.
+
+        https://balena.fibery.io/Work/Project/3116
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Page-
+  version: 4.3.9
+  title: ""
+  date: 2026-11-24T03:23:09.807Z
+- commits:
     - subject: Fix building the image tree with no images or a missing parent
       hash: 305eabdb53c33a77c9916e47533eb5e4236d8913
       body: |

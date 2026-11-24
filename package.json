@@ -1,6 +1,6 @@
 {
   "name": "docker-storage-gc",
-  "version": "4.3.8",
+  "version": "4.3.9",
   "main": "build/index.js",
   "scripts": {
     "lint": "balena-lint -t tsconfig.dev.json -e ts -e js lib test tools",
@@ -40,6 +40,6 @@
     "typescript": "6.0.3"
   },
   "versionist": {
-    "publishedAt": "2026-11-24T01:05:09.943Z"
+    "publishedAt": "2026-11-24T03:23:09.884Z"
   }
 }
