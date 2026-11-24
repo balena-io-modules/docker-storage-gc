@@ -1,4 +1,23 @@
 - commits:
+    - subject: Use one docker instance for pulling and running the base image
+      hash: 215e3d38b7bcec301ec6458b5ac37ee9dacbf062
+      body: |
+        `DockerProgress` was given its own `new Docker(hostObj)`, whilst
+        everything else used `getDocker(hostObj)`, which resolves an empty
+        `hostObj` to `/var/run/docker.sock` rather than dockerode's own defaults
+        (eg `~/.docker/run/docker.sock` or the Windows named pipe). The base
+        image could therefore be pulled into a different daemon to the one it
+        was then run on. Share the instance instead.
+
+        https://balena.fibery.io/Work/Project/3116
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Page-
+  version: 4.3.6
+  title: ""
+  date: 2026-11-24T00:20:09.509Z
+- commits:
     - subject: Normalize image references from events before recording mtimes
       hash: 17399de9155db656747ba3ef7bdd38cfb5b702fa
       body: |
