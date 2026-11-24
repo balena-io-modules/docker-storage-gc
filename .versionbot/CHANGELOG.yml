@@ -1,4 +1,24 @@
 - commits:
+    - subject: Fix building the image tree with no images or a missing parent
+      hash: 305eabdb53c33a77c9916e47533eb5e4236d8913
+      body: |
+        - With no images the root node was never created, so `createTree`
+          threw a TypeError and `garbageCollect` failed on an empty engine
+        - An image whose `ParentId` was not in the image list (possible with
+          the containerd image store, where the parent is only an image label)
+          was attached to a placeholder node that was never attached to the
+          tree, so it and all of its descendants could never be removed. Attach
+          those to the root instead
+
+        https://balena.fibery.io/Work/Project/3116
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Page-
+  version: 4.3.8
+  title: ""
+  date: 2026-11-24T01:05:09.850Z
+- commits:
     - subject: Fix the metrics event typings and always record the GC run time
       hash: f82975847c4e8e5e4e8062c0928362ce3540e531
       body: >
