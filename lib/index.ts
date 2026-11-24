@@ -1,6 +1,6 @@
 import { EventEmitter } from 'eventemitter3';
 import { DockerProgress } from 'docker-progress';
-import Docker from 'dockerode';
+import type Docker from 'dockerode';
 import type { LayerMtimes } from './docker-event-stream';
 import { dockerMtimeStream } from './docker-event-stream';
 import type { ImageNode } from './docker-image-tree';
@@ -149,11 +149,12 @@ export default class DockerGC {
 
 	public async setDocker(hostObj: Docker.DockerOptions): Promise<void> {
 		this.currentMtimes = new Map();
-		this.dockerProgress = new DockerProgress({
-			docker: new Docker(hostObj),
-		});
 		const docker = getDocker(hostObj);
 		this.docker = docker;
+		// Share the instance so that images are pulled from the same daemon that
+		// we run them on, `getDocker` resolves an empty `hostObj` differently to
+		// dockerode's own defaults
+		this.dockerProgress = new DockerProgress({ docker });
 		// Check that we can connect to the daemon
 		await docker.ping();
 	}
