@@ -21,7 +21,7 @@
   },
   "description": "Automatically cleanup unused images based on various cache replacement algorithms",
   "dependencies": {
-    "@types/dockerode": "^3.3.44",
+    "@types/dockerode": "^4.0.0",
     "@types/JSONStream": "npm:@types/jsonstream@^0.8.33",
     "@types/node": "^16.18.126",
     "docker-progress": "^5.3.1",
