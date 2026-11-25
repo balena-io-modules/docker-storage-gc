@@ -1,4 +1,36 @@
 - commits:
+    - subject: Fix mtime stream leaks and restarts
+      hash: 7c7a307d9c5ae0d38361c464cd9c825bdf77d523
+      body: |
+        - `destroyMtimeStream` removed all listeners before destroying the
+          stream, which included the listeners `pipeline` uses to tear down the
+          other streams, so the docker events request was left open (and kept
+          being parsed) every time the stream was destroyed or restarted
+        - Only `error` triggered a restart, so if the events request ended
+          cleanly (eg the daemon restarting) the stream was silently dead and
+          `setupMtimeStream` became a noop forever. Use `finished` so both
+          errors and the stream ending trigger a restart
+        - A pending restart could not be cancelled, so calling
+          `destroyMtimeStream` whilst one was scheduled (or whilst a setup was
+          in progress, or whilst `setDocker` was connecting to a new host)
+          brought the stream back to life. A setup started after the destroy no
+          longer waits on the cancelled one either
+        - Concurrent `setupMtimeStream` calls each created a stream, with the
+          extras leaking and destroying each other on error
+        - If listing images failed the already opened events request was leaked
+        - `setDocker` left an existing stream watching the previous host and
+          writing into the mtimes of the new one, it now restarts it on the new
+          host, including after a previous `setDocker` failed to connect
+
+        https://balena.fibery.io/Work/Project/3116
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Page-
+  version: 4.3.11
+  title: ""
+  date: 2026-11-25T00:15:52.723Z
+- commits:
     - subject: Avoid pulling on every free space check and make df parsing robust
       hash: 1729e7d190efc5431b3c6185754a38bda7d2dd22
       body: >
