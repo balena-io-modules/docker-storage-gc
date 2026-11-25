@@ -1,6 +1,7 @@
 import JSONStream from 'JSONStream';
 import type Docker from 'dockerode';
 import { Stream } from 'node:stream';
+import type { Readable } from 'node:stream';
 
 const IMAGE_EVENTS = ['delete', 'import', 'pull', 'push', 'tag'];
 
@@ -151,11 +152,21 @@ export async function dockerMtimeStream(
 	docker: Docker,
 	layerMtimes: LayerMtimes = new Map(),
 ) {
-	const [stream, streamParser] = await Promise.all([
+	const [stream, streamParser] = await Promise.allSettled([
 		docker.getEvents(),
 		parseEventStream(docker, layerMtimes),
 	]);
-	return Stream.pipeline(stream, ...streamParser, () => {
+	if (stream.status === 'rejected') {
+		throw stream.reason;
+	}
+	if (streamParser.status === 'rejected') {
+		// Make sure we don't leave the events request open
+		(stream.value as Readable).destroy();
+		throw streamParser.reason;
+	}
+	// Errors are propagated to the returned stream by destroying it, and
+	// destroying the returned stream will destroy the events request too
+	return Stream.pipeline(stream.value, ...streamParser.value, () => {
 		// noop
 	});
 }
