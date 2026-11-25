@@ -212,10 +212,11 @@ describe('createTree', function () {
 			await Stream.promises.pipeline(
 				Stream.Readable.from([
 					JSON.stringify({
-						status: 'start',
-						id: 'c1',
-						from: 'alpine',
+						Type: 'container',
+						Action: 'start',
+						Actor: { ID: 'c1', Attributes: { image: 'alpine' } },
 						time: recentTime,
+						timeNano: recentTime * 1e9,
 					}),
 				]),
 				parser,

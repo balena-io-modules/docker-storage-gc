@@ -1,15 +1,36 @@
-import type { LayerMtimes } from '../build/docker-event-stream';
+import type { DockerEvent, LayerMtimes } from '../build/docker-event-stream';
 
 import { expect } from 'chai';
 import fs from 'fs';
 import { Stream } from 'node:stream';
 import {
+	dockerMtimeStream,
 	normalizeImageRef,
 	parseEventStream,
 } from '../build/docker-event-stream';
 import { createMockDocker } from './lib/common';
 
 import fixtureImages from './fixtures/docker-images.json';
+
+const imageEvent = (action: string, id: string, time: number): DockerEvent => ({
+	Type: 'image',
+	Action: action,
+	Actor: { ID: id, Attributes: {} },
+	time,
+	timeNano: time * 1e9,
+});
+
+const containerEvent = (
+	action: string,
+	image: string,
+	time: number,
+): DockerEvent => ({
+	Type: 'container',
+	Action: action,
+	Actor: { ID: 'container1', Attributes: { image } },
+	time,
+	timeNano: time * 1e9,
+});
 
 const pipeEvents = async (events: object[]): Promise<LayerMtimes> => {
 	const streamParsers = await parseEventStream(createMockDocker([]));
@@ -113,26 +134,16 @@ describe('parseEventStream mtime persistence', function () {
 		expect(layerMtimes.has(key)).to.eq(false);
 	});
 
-	it('should store container event mtime under the from key', async () => {
+	it('should store container event mtime under the image attribute', async () => {
 		const mtimes = await pipeEvents([
-			{
-				status: 'create',
-				id: 'container1',
-				from: 'myapp:latest',
-				time: 1700000000,
-			},
+			containerEvent('create', 'myapp:latest', 1700000000),
 		]);
 		expect(mtimes.get('myapp:latest')).to.equal(1700000000);
 	});
 
-	it('should store container event mtime under sha256 ID when from is an ID', async () => {
+	it('should store container event mtime under sha256 ID when the image attribute is an ID', async () => {
 		const mtimes = await pipeEvents([
-			{
-				status: 'start',
-				id: 'container1',
-				from: 'sha256:abc123def456',
-				time: 1700000000,
-			},
+			containerEvent('start', 'sha256:abc123def456', 1700000000),
 		]);
 		expect(mtimes.get('sha256:abc123def456')).to.equal(1700000000);
 	});
@@ -176,31 +187,123 @@ describe('normalizeImageRef', function () {
 
 	it('should match container events that reference an image without a tag', async () => {
 		const mtimes = await pipeEvents([
-			{ status: 'start', id: 'c1', from: 'alpine', time: 1700000000 },
-			{
-				status: 'start',
-				id: 'c2',
-				from: 'docker.io/library/busybox:1.36',
-				time: 1700000001,
-			},
+			containerEvent('start', 'alpine', 1700000000),
+			containerEvent('start', 'docker.io/library/busybox:1.36', 1700000001),
 		]);
 		expect(mtimes.get('alpine:latest')).to.equal(1700000000);
 		expect(mtimes.get('busybox:1.36')).to.equal(1700000001);
 	});
 
-	it('should ignore image events without a `from` that share a container event status', async () => {
-		// API v1.46+ sends an image `create` event for each build
+	it('should normalize image IDs from image events, including delete', async () => {
+		const mtimes = await pipeEvents([
+			imageEvent('pull', 'docker.io/library/alpine', 1700000000),
+			imageEvent('pull', 'docker.io/library/busybox', 1700000001),
+			imageEvent('delete', 'docker.io/library/busybox', 1700000002),
+		]);
+		expect([...mtimes]).to.deep.equal([['alpine:latest', 1700000000]]);
+	});
+});
+
+describe('parseEventStream event formats', function () {
+	it('should not depend on the legacy status/id/from fields (removed in API v1.52)', async () => {
+		const mtimes = await pipeEvents([
+			imageEvent('pull', 'alpine:3.18', 1700000000),
+			containerEvent('start', 'alpine:3.18', 1700000001),
+			imageEvent('tag', 'sha256:abc', 1700000002),
+		]);
+		expect(mtimes.get('alpine:3.18')).to.equal(1700000001);
+		expect(mtimes.get('sha256:abc')).to.equal(1700000002);
+	});
+
+	it('should ignore the legacy-only event format', async () => {
+		const mtimes = await pipeEvents([
+			{ status: 'start', id: 'c1', from: 'legacy:v1', time: 1700000000 },
+		]);
+		expect(mtimes.has('legacy:v1')).to.equal(false);
+	});
+
+	it('should handle actions that include details after a colon', async () => {
+		const mtimes = await pipeEvents([
+			containerEvent('exec_start: sh -c ls', 'myapp:latest', 1700000000),
+		]);
+		expect(mtimes.get('myapp:latest')).to.equal(1700000000);
+	});
+
+	it('should remove the mtime on image delete', async () => {
+		const mtimes = await pipeEvents([
+			imageEvent('tag', 'sha256:abc', 1700000000),
+			imageEvent('delete', 'sha256:abc', 1700000001),
+		]);
+		expect(mtimes.has('sha256:abc')).to.equal(false);
+	});
+
+	it('should ignore events for other object types', async () => {
 		const mtimes = await pipeEvents([
 			{
-				status: 'create',
-				id: `sha256:${id}`,
-				Type: 'image',
+				Type: 'network',
 				Action: 'create',
-				Actor: { ID: `sha256:${id}`, Attributes: {} },
+				Actor: { ID: 'net1', Attributes: { image: 'myapp:latest' } },
 				time: 1700000000,
+				timeNano: 1700000000000000000,
 			},
-			{ status: 'start', id: 'c1', from: 'alpine', time: 1700000001 },
 		]);
-		expect([...mtimes]).to.deep.equal([['alpine:latest', 1700000001]]);
+		expect(mtimes.has('myapp:latest')).to.equal(false);
+		expect(mtimes.has('net1')).to.equal(false);
+	});
+
+	it('should track image create and load events by image ID', async () => {
+		const mtimes = await pipeEvents([
+			imageEvent('create', 'sha256:built', 1700000000),
+			imageEvent('load', 'sha256:loaded', 1700000001),
+		]);
+		expect(mtimes.get('sha256:built')).to.equal(1700000000);
+		expect(mtimes.get('sha256:loaded')).to.equal(1700000001);
+	});
+
+	it('should not treat an image create event as a container event', async () => {
+		const mtimes = await pipeEvents([
+			{
+				...imageEvent('create', 'sha256:built', 1700000000),
+				// Image events never have an image attribute, but make sure it is ignored
+				Actor: { ID: 'sha256:built', Attributes: { image: 'myapp:latest' } },
+			},
+		]);
+		expect([...mtimes.keys()]).to.deep.equal(['sha256:built']);
+	});
+
+	it('should handle events that include both the legacy and current fields (API < v1.52)', async () => {
+		const mtimes = await pipeEvents([
+			{
+				status: 'pull',
+				id: 'busybox:latest',
+				...imageEvent('pull', 'busybox:latest', 1700000000),
+			},
+			{
+				status: 'start',
+				id: 'container1',
+				from: 'alpine:3.18',
+				...containerEvent('start', 'alpine:3.18', 1700000001),
+			},
+		]);
+		expect(mtimes.get('busybox:latest')).to.equal(1700000000);
+		expect(mtimes.get('alpine:3.18')).to.equal(1700000001);
+	});
+});
+
+describe('dockerMtimeStream', function () {
+	it('should only request image and container events', async () => {
+		let eventsOpts: unknown;
+		const docker = {
+			listImages: () => Promise.resolve([]),
+			getEvents: (opts: unknown) => {
+				eventsOpts = opts;
+				return Promise.resolve(Stream.Readable.from([]));
+			},
+		} as unknown as Dockerode;
+		const stream = await dockerMtimeStream(docker);
+		stream.destroy();
+		expect(eventsOpts).to.deep.equal({
+			filters: { type: ['image', 'container'] },
+		});
 	});
 });

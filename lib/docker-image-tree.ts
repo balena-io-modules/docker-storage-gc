@@ -28,9 +28,10 @@ export const createNode = (id: string): ImageNode => ({
 
 const getMtime = function (tree: ImageNode, layerMtimes: LayerMtimes) {
 	// Collect mtime candidates from all possible keys (ID, tags, digests).
-	// Container events store mtime under the `from` field which may be a tag,
-	// while stream init stores 0 under the sha256 ID. We need the most recent
-	// value across all keys to avoid treating a recently-used image as stale.
+	// Container events store mtime under the image the container was created
+	// with, which may be a tag, while stream init stores 0 under the sha256 ID.
+	// We need the most recent value across all keys to avoid treating a
+	// recently-used image as stale.
 	let max: number | undefined;
 	const keys = [tree.id, ...tree.repoTags, ...tree.repoDigests];
 	for (const key of keys) {
