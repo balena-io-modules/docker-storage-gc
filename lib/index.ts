@@ -32,11 +32,15 @@ interface RemovableImageNode extends ImageNode {
 	parent?: RemovableImageNode;
 }
 
+// A multi-arch image, so that the daemon pulls the variant for its own platform
+const BASE_IMAGE = 'alpine:3.23';
+
+// Images that must never be removed
+const isKept = (node: RemovableImageNode): boolean =>
+	node.isUsedByAContainer === true || node.repoTags.includes(BASE_IMAGE);
+
 const isCandidateForRemoval = (node: RemovableImageNode): boolean => {
-	return (
-		!node.isUsedByAContainer &&
-		Object.values(node.children).every((n) => n.removed)
-	);
+	return !isKept(node) && Object.values(node.children).every((n) => n.removed);
 };
 const getUnusedTreeLeafs = function (
 	tree: RemovableImageNode,
@@ -44,7 +48,7 @@ const getUnusedTreeLeafs = function (
 ): RemovableImageNode[] {
 	if (!tree.removed) {
 		const children = Object.values(tree.children).filter((n) => !n.removed);
-		if (children.length === 0 && !tree.isUsedByAContainer) {
+		if (children.length === 0 && !isKept(tree)) {
 			result.push(tree);
 		} else {
 			for (const child of children) {
@@ -68,18 +72,19 @@ const mtimeSort = sortBy('mtime');
 const uniqueSizeSort = sortBy('uniqueSize');
 
 /**
- * This will mutate the passed in tree, marking the images to be removed as removed.
+ * Yields the images to remove in eviction order: oldest mtime first, then
+ * largest unique size. A parent becomes a candidate once all of its children
+ * have been yielded. The caller decides when to stop, based on the free space
+ * that it measures, because `uniqueSize` comes from a single `listImages`
+ * snapshot and is not a reliable measure of what a removal frees.
+ *
+ * This will mutate the passed in tree, marking each yielded image as removed.
  * Do not re-use the tree for multiple calls to this function as it will cause issues.
  */
-const getImagesToRemove = function (
+function* getImagesToRemove(
 	tree: RemovableImageNode,
-	reclaimSpace: number,
-	metrics: Metrics,
-): RemovableImageNode[] {
-	// Removes the oldest, largest leafs first.
+): Generator<RemovableImageNode, void, undefined> {
 	// This should avoid trying to remove images with children.
-	const result = [];
-	let size = 0;
 	const leafs = getUnusedTreeLeafs(tree);
 	const resort = () => {
 		leafs.sort((a, b) => {
@@ -89,35 +94,25 @@ const getImagesToRemove = function (
 		});
 	};
 	resort();
-	while (size < reclaimSpace) {
-		if (leafs.length === 0) {
-			break;
-		}
+	while (leafs.length > 0) {
 		const leaf = leafs.pop()!;
 		leaf.removed = true;
-		if (leaf !== tree) {
+		if (leaf === tree) {
 			// don't remove the tree root
-			result.push(leaf);
-			// Credit only the layers unique to this image. The engine reports
-			// `size` as the sum of every layer in the image's chain, including
-			// layers shared with other images on disk. Summing raw `size`
-			// across removals over-counts shared layers and makes GC think it
-			// reclaimed far more than it did. `size - sharedSize` is a
-			// conservative floor on the actual reclaim; if cascading removals
-			// also drop the last reference to a shared layer, the extra
-			// reclaim is accounted for when that image is popped in turn.
-			size += leaf.uniqueSize;
-			if (leaf.parent != null && isCandidateForRemoval(leaf.parent)) {
-				// If the parent is now a candidate for deletion then add to the potential leafs and resort them
-				leafs.push(leaf.parent);
-				resort();
-			}
+			continue;
+		}
+		yield leaf;
+		// `sharedSize` is a static snapshot, so a parent whose layers were shared
+		// only with its (now removed) children still reports them as shared. The
+		// eviction order therefore under-ranks such parents, and the actual
+		// reclaim is only known by measuring free space.
+		if (leaf.parent != null && isCandidateForRemoval(leaf.parent)) {
+			// If the parent is now a candidate for deletion then add to the potential leafs and resort them
+			leafs.push(leaf.parent);
+			resort();
 		}
 	}
-
-	metrics.emit('numberImagesToRemove', result.length);
-	return result;
-};
+}
 
 /**
  * Parse the output of `df -B 1 <mountpoint>` for a single filesystem
@@ -148,9 +143,6 @@ export const parseDfOutput = (output: string) => {
 	});
 	return { used, total, free };
 };
-
-// A multi-arch image, so that the daemon pulls the variant for its own platform
-const BASE_IMAGE = 'alpine:3.23';
 
 const recordGcRunTime = function (
 	t0: ReturnType<NodeJS.HRTime>,
@@ -280,7 +272,7 @@ export default class DockerGC {
 		}
 	}
 
-	private async removeImage(image: RemovableImageNode): Promise<void> {
+	private async removeImage(image: RemovableImageNode): Promise<boolean> {
 		// Removing the last tag of a repository also removes the digests of that
 		// repository, but references from any other repository (eg the same image
 		// pulled by digest from another repo) keep the image alive, so we keep
@@ -319,25 +311,61 @@ export default class DockerGC {
 			}
 			this.metrics.emit('imageRemoved', removalType);
 			if (response.some(({ Deleted }) => Deleted === image.id)) {
-				return;
+				return true;
 			}
 		}
+		return false;
 	}
 
+	// How often to check free space between image removals, whichever comes first
+	public freeSpaceCheckInterval = { images: 10, ms: 30_000 };
+
+	/**
+	 * Remove unused images, oldest first, until the daemon's free space has
+	 * grown by `reclaimSpace` bytes since the start of the run, or until no
+	 * candidates are left. Free space is measured with `getDaemonFreeSpace`
+	 * at the start of the run and then in batches, see `freeSpaceCheckInterval`.
+	 * A failure to measure free space at the start of the run or between
+	 * removals stops the run and is thrown, regardless of `attemptAll`, so that
+	 * a run never removes images without a target. A failure of the final
+	 * measurement, taken when no candidates are left, is only logged.
+	 *
+	 * @param attemptAll keep removing images after a removal fails, and throw
+	 * the first removal error once the run stops
+	 */
 	public async garbageCollect(
 		reclaimSpace: number,
 		attemptAll = false,
 	): Promise<void> {
 		let err: any;
+		let removed = 0;
 		const startTime = process.hrtime();
 		this.metrics.emit('spaceReclaimed', reclaimSpace);
 
 		try {
+			// Also catches NaN, which would otherwise give a target that is never reached
+			if (!(reclaimSpace > 0)) {
+				console.log(
+					`[GC ${this.host}]: Stopped: nothing to reclaim (reclaimSpace: ${reclaimSpace}), removed 0 images`,
+				);
+				return;
+			}
+			// Measure before listing images, so that a failure to measure stops
+			// the run before it touches anything. Measuring may also pull the base
+			// image, which then appears in the tree and is excluded from removal.
+			const initialFree = (await this.getDaemonFreeSpace()).free;
+			const targetFree = initialFree + reclaimSpace;
+			let free = initialFree;
+			let attemptsSinceCheck = 0;
+			let lastCheck = Date.now();
+			let targetReached = false;
+
 			const tree = await dockerImageTree(this.docker, this.currentMtimes);
-			const images = getImagesToRemove(tree, reclaimSpace, this.metrics);
-			for (const image of images) {
+			for (const image of getImagesToRemove(tree)) {
 				try {
-					await this.removeImage(image);
+					if (await this.removeImage(image)) {
+						removed++;
+					}
 				} catch (e: any) {
 					this.metrics.emit('imageRemovalError', e.statusCode);
 					console.log(`[GC ${this.host}]: Failed to remove image: `, image);
@@ -348,8 +376,39 @@ export default class DockerGC {
 						throw e;
 					}
 				}
+				attemptsSinceCheck++;
+				if (
+					attemptsSinceCheck >= this.freeSpaceCheckInterval.images ||
+					Date.now() - lastCheck >= this.freeSpaceCheckInterval.ms
+				) {
+					// A failure here propagates and stops the run, even with `attemptAll`
+					free = (await this.getDaemonFreeSpace()).free;
+					attemptsSinceCheck = 0;
+					lastCheck = Date.now();
+					if (free >= targetFree) {
+						targetReached = true;
+						break;
+					}
+				}
 			}
+			let freeLabel = 'after';
+			if (!targetReached && attemptsSinceCheck > 0) {
+				// Measure again so the final free space is accurate in the log
+				try {
+					free = (await this.getDaemonFreeSpace()).free;
+					targetReached = free >= targetFree;
+				} catch (e: any) {
+					console.log(
+						`[GC ${this.host}]: Failed to measure free space at the end of the run: ${e?.message ?? e}`,
+					);
+					freeLabel = 'last measured';
+				}
+			}
+			console.log(
+				`[GC ${this.host}]: Stopped: ${targetReached ? 'target reached' : 'no candidates left'}, removed ${removed} images, free bytes before: ${initialFree}, ${freeLabel}: ${free}, target: ${targetFree}`,
+			);
 		} finally {
+			this.metrics.emit('numberImagesToRemove', removed);
 			recordGcRunTime(startTime, this.metrics);
 		}
 		if (err != null) {
